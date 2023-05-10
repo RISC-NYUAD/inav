@@ -37,6 +37,7 @@
 
 #include <platform.h>
 #include "target.h"
+#include "rx/rx.h"
 
 #include "fc/runtime_config.h"
 #include "common/utils.h"
@@ -49,6 +50,9 @@
 
 #include "target/SITL/sim/realFlight.h"
 #include "target/SITL/sim/xplane.h"
+#include "target/SITL/sim/gazebo.h"
+
+#include "dyad.h"
 
 // More dummys
 const int timerHardwareCount = 0;
@@ -56,6 +60,7 @@ timerHardware_t timerHardware[1];
 uint32_t SystemCoreClock = 500 * 1e6; // fake 500 MHz;
 char _estack = 0 ;
 char _Min_Stack_Size = 0;
+
 
 static pthread_mutex_t mainLoopLock;
 static SitlSim_e sitlSim = SITL_SIM_NONE;
@@ -68,7 +73,10 @@ static int simPort = 0;
 
 static char **c_argv;
 
+
+
 void systemInit(void) {
+
 
     fprintf(stderr, "INAV %d.%d.%d SITL\n", FC_VERSION_MAJOR, FC_VERSION_MINOR, FC_VERSION_PATCH_LEVEL);
     clock_gettime(CLOCK_MONOTONIC, &start_time);
@@ -116,6 +124,18 @@ void systemInit(void) {
                 fprintf(stderr, "[SIM] Connection with X-Plane successfully established.\n");
             } else {
                 fprintf(stderr, "[SIM] Connection with X-PLane NOT established.\n");
+            }
+            break;
+        case SITL_SIM_GAZEBO:
+            if (mappingCount > GZ_MAX_PWM_OUTS) {
+                fprintf(stderr, "[SIM] Mapping error. Gazebo supports a maximum of %i PWM outputs.", GZ_MAX_PWM_OUTS);
+                sitlSim = SITL_SIM_NONE;
+                break;
+            }
+            if (simGazeboInit(simIp, pwmMapping, mappingCount, useImu)) {
+                fprintf(stderr, "[SIM] Connection with Gazebo successfully established.\n");
+            } else {
+                fprintf(stderr, "[SIM] Connection with Gazebo NOT established.\n");
             }
             break;
         default:
@@ -205,7 +225,9 @@ void parseArguments(int argc, char *argv[])
                     sitlSim = SITL_SIM_REALFLIGHT;
                 } else if (strcmp(optarg, "xp") == 0){
                     sitlSim = SITL_SIM_XPLANE;
-                } else {
+                } else if (strcmp(optarg, "gz") == 0){
+					sitlSim = SITL_SIM_GAZEBO;
+				}	else {
                     fprintf(stderr, "[SIM] Unsupported simulator %s.\n", optarg);
                 }
                 break;

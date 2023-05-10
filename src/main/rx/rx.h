@@ -162,6 +162,7 @@ typedef struct rxRuntimeConfig_s {
     rxLinkQualityTracker_e * lqTracker;     // Pointer to a
     uint16_t *channelData;
     void *frameData;
+	rxReceiverType_e rxProvider;
 } rxRuntimeConfig_t;
 
 typedef struct rcChannel_s {

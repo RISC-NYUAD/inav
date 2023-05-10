@@ -23,6 +23,10 @@ main_sources(SITL_SRC
     target/SITL/sim/simple_soap_client.h
     target/SITL/sim/xplane.c
     target/SITL/sim/xplane.h
+	target/SITL/sim/gazebo.c
+	target/SITL/sim/gazebo.h
+    target/SITL/dyad.c
+	target/SITL/dyad.h
 )
 
 

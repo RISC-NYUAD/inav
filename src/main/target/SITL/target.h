@@ -64,6 +64,7 @@
 #define USE_PITOT_FAKE
 #define USE_IMU_FAKE
 #define USE_FAKE_BARO
+#define USE_PWM_OUTPUT
 #define USE_FAKE_MAG
 #define USE_GPS_FAKE
 #define USE_RANGEFINDER_FAKE
@@ -184,9 +185,43 @@ typedef enum
     SITL_SIM_NONE,
     SITL_SIM_REALFLIGHT,
     SITL_SIM_XPLANE,
+	SITL_SIM_GAZEBO,
 } SitlSim_e;
 
 bool lockMainPID(void);
 void unlockMainPID(void);
 void parseArguments(int argc, char *argv[]);
 char *strnstr(const char *s, const char *find, size_t slen);
+
+#define SIMULATOR_MAX_RC_CHANNELS   16
+#define SIMULATOR_MAX_PWM_CHANNELS  16
+
+typedef struct {
+    double timestamp;                   // in seconds
+    double imu_angular_velocity_rpy[3]; // rad/s -> range: +/- 8192; +/- 2000 deg/se
+    double imu_linear_acceleration_xyz[3];    // m/s/s NED, body frame -> sim 1G = 9.80665, FC 1G = 256
+    double imu_orientation_quat[4];     //w, x, y, z
+    double velocity_xyz[3];             // m/s, earth frame
+    double position_xyz[3];             // meters, NED from origin
+    double pressure;
+} fdm_packet;
+
+typedef struct {
+    double timestamp;                               // in seconds
+    uint16_t channels[SIMULATOR_MAX_RC_CHANNELS];   // RC channels
+} rc_packet;
+
+typedef struct {
+    float motor_speed[4];   // normal: [0.0, 1.0], 3D: [-1.0, 1.0]
+} servo_packet;
+
+typedef struct {
+    uint16_t motorCount; // Count of motor in the PWM output.
+    float pwm_output_raw[SIMULATOR_MAX_PWM_CHANNELS];   // Raw PWM from 1100 to 1900
+} servo_packet_raw;
+
+
+
+
+
+
