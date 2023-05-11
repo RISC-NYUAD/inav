@@ -39,7 +39,8 @@ typedef enum {
     PLATFORM_TRICOPTER      = 3,
     PLATFORM_ROVER          = 4,
     PLATFORM_BOAT           = 5,
-    PLATFORM_OTHER          = 6
+    PLATFORM_OTHER          = 6,
+    PLATFORM_OMNICOPTER     = 7
 } flyingPlatformType_e;
 
 
@@ -56,6 +57,8 @@ typedef struct motorAxisCorrectionLimits_s {
 
 // Custom mixer data per motor
 typedef struct motorMixer_s {
+    float fx;
+    float fy;
     float throttle;
     float roll;
     float pitch;

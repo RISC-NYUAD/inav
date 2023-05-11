@@ -171,6 +171,9 @@ void mixerUpdateStateFlags(void)
     } else if (mixerConfig()->platformType == PLATFORM_HELICOPTER) {
         ENABLE_STATE(MULTIROTOR);
         ENABLE_STATE(ALTITUDE_CONTROL);
+    } else if (mixerConfig()->platformType == PLATFORM_OMNICOPTER) {
+        ENABLE_STATE(MULTIROTOR);
+        ENABLE_STATE(ALTITUDE_CONTROL);
     }
 
     if (mixerConfig()->hasFlaps) {
@@ -667,6 +670,10 @@ motorStatus_e getMotorStatus(void)
 void loadPrimaryMotorMixer(void) {
     for (int i = 0; i < MAX_SUPPORTED_MOTORS; i++) {
         currentMixer[i] = *primaryMotorMixer(i);
+		if (mixerConfig()->platformType == PLATFORM_OMNICOPTER){
+				currentMixer[i].fx = 0.0f;
+				currentMixer[i].fy = 0.0f;
+		}
     }
 }
 
