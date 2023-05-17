@@ -62,6 +62,8 @@ static float mixerScale = 1.0f;
 static EXTENDED_FASTRAM motorMixer_t currentMixer[MAX_SUPPORTED_MOTORS];
 static EXTENDED_FASTRAM uint8_t motorCount = 0;
 EXTENDED_FASTRAM int mixerThrottleCommand;
+EXTENDED_FASTRAM int mixerFxCommand;
+EXTENDED_FASTRAM int mixerFyCommand;
 static EXTENDED_FASTRAM int throttleIdleValue = 0;
 static EXTENDED_FASTRAM int motorValueWhenStopped = 0;
 static reversibleMotorsThrottleState_e reversibleMotorsThrottleState = MOTOR_DIRECTION_FORWARD;
@@ -70,6 +72,21 @@ static EXTENDED_FASTRAM int throttleDeadbandHigh = 0;
 static EXTENDED_FASTRAM int throttleRangeMin = 0;
 static EXTENDED_FASTRAM int throttleRangeMax = 0;
 static EXTENDED_FASTRAM int8_t motorYawMultiplier = 1;
+
+// TODO: add correct mixing table for OMNICOPTER
+static const motorMixer_t mixerOmnicopter[] = {
+  {0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f},            // Motor 1
+  {0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f},            // Motor 2
+  {0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f},            // Motor 3
+  {0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f},            // Motor 4
+  {0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f},            // Motor 5
+  {0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f},            // Motor 6
+  {0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f},            // Motor 7
+  {0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f},            // Motor 8
+};
+
+
+
 
 int motorZeroCommand = 0;
 
@@ -506,7 +523,40 @@ void FAST_CODE mixTable()
     int16_t rpyMixRange = rpyMixMax - rpyMixMin;
     int16_t throttleRange;
     int16_t throttleMin, throttleMax;
+    int16_t lateralRangeMax;
+    if (mixerConfig()->platformType == PLATFORM_OMNICOPTER){
 
+      throttleRangeMin = throttleIdleValue;
+      throttleRangeMax = motorConfig()->maxthrottle;
+      lateralRangeMax = motorConfig()->maxLateral;
+      mixerThrottleCommand = constrain(rcCommand[THROTTLE], throttleRangeMin, throttleRangeMax);
+      mixerFxCommand = constrain(rcCommand[AUX1],  -lateralRangeMax, lateralRangeMax);
+      mixerFyCommand = constrain(rcCommand[AUX2],  -lateralRangeMax, lateralRangeMax);
+    if (ARMING_FLAG(ARMED)) {
+        const motorStatus_e currentMotorStatus = getMotorStatus();
+        for (int i = 0; i < motorCount; i++) {
+            motor[i] = rpyMix[i] + 
+                        mixerThrottleCommand * currentMixer[i].throttle +
+                        mixerFxCommand * currentMixer[i].fx +
+                        mixerFyCommand * currentMixer[i].fy;
+
+            if (failsafeIsActive()) {
+                motor[i] = constrain(motor[i], motorConfig()->mincommand, motorConfig()->maxthrottle);
+            } else {
+                motor[i] = constrain(motor[i], throttleRangeMin, throttleRangeMax);
+            }
+            // Motor stop handling
+            if (currentMotorStatus != MOTOR_RUNNING) {
+                motor[i] = motorValueWhenStopped;
+            }
+        }
+    } else {
+        for (int i = 0; i < motorCount; i++) {
+            motor[i] = motor_disarmed[i];
+        }
+    }
+
+    } else 
     // Find min and max throttle based on condition.
 #ifdef USE_PROGRAMMING_FRAMEWORK
     if (LOGIC_CONDITION_GLOBAL_FLAG(LOGIC_CONDITION_GLOBAL_FLAG_OVERRIDE_THROTTLE)) {
@@ -669,11 +719,13 @@ motorStatus_e getMotorStatus(void)
 
 void loadPrimaryMotorMixer(void) {
     for (int i = 0; i < MAX_SUPPORTED_MOTORS; i++) {
-        currentMixer[i] = *primaryMotorMixer(i);
-		if (mixerConfig()->platformType == PLATFORM_OMNICOPTER){
+		if (mixerConfig()->platformType != PLATFORM_OMNICOPTER){
+                currentMixer[i] = *primaryMotorMixer(i);
 				currentMixer[i].fx = 0.0f;
 				currentMixer[i].fy = 0.0f;
-		}
+		}else{
+                currentMixer[i] =  mixerOmnicopter[i];
+        }
     }
 }
 

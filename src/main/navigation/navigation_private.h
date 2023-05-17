@@ -410,7 +410,9 @@ typedef struct {
     int8_t                      rthTBWrapAroundCounter;     // stores trackpoint array overwrite index position
 
     /* Internals & statistics */
-    int16_t                     rcAdjustment[4];
+    int16_t                     rcAdjustment[6]; // rcAdjustment change to 6 channels
+    // NOTE: channels are ROLL, PITCH, YAW, Throttle, AUX1, AUX2
+    // AUX1 corresponds to Fx and AUX2 corresponds to Fy
     float                       totalTripDistance;
 } navigationPosControl_t;
 
