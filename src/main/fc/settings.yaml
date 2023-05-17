@@ -114,7 +114,7 @@ tables:
     values: ["PERCENT", "MAH", "MWH"]
     enum: smartportFuelUnit_e
   - name: platform_type
-    values: ["MULTIROTOR", "AIRPLANE", "HELICOPTER", "TRICOPTER", "ROVER", "BOAT"]
+    values: ["MULTIROTOR", "AIRPLANE", "HELICOPTER", "TRICOPTER", "ROVER", "BOAT","OMNICOPTER"]
   - name: output_mode
     values: ["AUTO", "MOTORS", "SERVOS"]
     enum: outputMode_e
@@ -1149,7 +1149,7 @@ groups:
         type: bool
       - name: platform_type
         description: "Defines UAV platform type. Allowed values: \"MULTIROTOR\", \"AIRPLANE\", \"HELICOPTER\", \"TRICOPTER\", \"ROVER\", \"BOAT\". Currently only MULTIROTOR, AIRPLANE and TRICOPTER types are implemented"
-        default_value: "MULTIROTOR"
+        default_value: "OMNICOPTER"
         field: platformType
         type: uint8_t
         table: platform_type

@@ -39,7 +39,8 @@ typedef enum {
     PLATFORM_TRICOPTER      = 3,
     PLATFORM_ROVER          = 4,
     PLATFORM_BOAT           = 5,
-    PLATFORM_OTHER          = 6
+    PLATFORM_OTHER          = 6,
+    PLATFORM_OMNICOPTER     = 7
 } flyingPlatformType_e;
 
 
@@ -56,6 +57,8 @@ typedef struct motorAxisCorrectionLimits_s {
 
 // Custom mixer data per motor
 typedef struct motorMixer_s {
+    float fx;
+    float fy;
     float throttle;
     float roll;
     float pitch;
@@ -85,6 +88,7 @@ PG_DECLARE(reversibleMotorsConfig_t, reversibleMotorsConfig);
 typedef struct motorConfig_s {
     // PWM values, in milliseconds, common range is 1000-2000 (1ms to 2ms)
     uint16_t maxthrottle;                   // This is the maximum value for the ESCs at full power this value can be increased up to 2000
+    uint16_t maxLateral;                   // This is the maximum value for the ESCs at full power this value can be increased up to 2000
     uint16_t mincommand;                    // This is the value for the ESCs when they are not armed. In some cases, this value must be lowered down to 900 for some specific ESCs
     uint16_t motorPwmRate;                  // The update rate of motor outputs (50-498Hz)
     uint8_t  motorPwmProtocol;
@@ -109,6 +113,8 @@ typedef enum {
 extern int16_t motor[MAX_SUPPORTED_MOTORS];
 extern int16_t motor_disarmed[MAX_SUPPORTED_MOTORS];
 extern int mixerThrottleCommand;
+extern int mixerFxCommand;
+extern int mixerFyCommand;
 
 int getThrottleIdleValue(void);
 int16_t getThrottlePercent(bool);
