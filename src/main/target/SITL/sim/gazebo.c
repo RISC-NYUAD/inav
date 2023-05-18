@@ -61,7 +61,7 @@
 #include "rx/sim.h"
 
 #define GZ_PORT 18083
-#define GZ_MAX_CHANNEL_COUNT 12
+#define GZ_MAX_CHANNEL_COUNT 16
 // RealFlight scenerys doesn't represent real landscapes, so fake some nice coords: Area 51 ;)
 #define FAKE_LAT 37.277127f
 #define FAKE_LON -115.799669f
@@ -72,7 +72,7 @@ static char simulator_ip[32] = "127.0.0.1";
 #define PORT_PWM        9002    // Out
 #define PORT_STATE      9003    // In
 #define PORT_RC         9004    // In
-
+#define RAD2DEG (180.0 / M_PI)
 
 static fdm_packet fdmPkt;
 static rc_packet rcPkt;
@@ -87,6 +87,7 @@ static pthread_t tcpWorker, udpWorker, udpWorkerRC;
 static udpLink_t stateLink, pwmLink, pwmRawLink, rcLink;
 static uint8_t pwmMapping[GZ_MAX_PWM_OUTS];
 static uint8_t mappingCount;
+//static pthread_mutex_t updateLock;
 
 static bool isInitalised = false;
 static bool useImu = false;
@@ -94,17 +95,13 @@ static bool useImu = false;
 typedef struct 
 {
     double m_channelValues[GZ_MAX_PWM_OUTS];
-    double m_currentPhysicsSpeedMultiplier;
-    double m_currentPhysicsTime_SEC;
-    double m_airspeed_MPS;
     double m_altitudeASL_MTR;
-    double m_altitudeAGL_MTR;
     double m_groundspeed_MPS;
     double m_pitchRate_DEGpSEC;
     double m_rollRate_DEGpSEC;
     double m_yawRate_DEGpSEC;
     double m_azimuth_DEG;
-    double m_inclination_DEG;
+    double m_pitch_DEG;
     double m_roll_DEG;
     double m_orientationQuaternion_X;
     double m_orientationQuaternion_Y;
@@ -112,37 +109,15 @@ typedef struct
     double m_orientationQuaternion_W;
     double m_aircraftPositionX_MTR;
     double m_aircraftPositionY_MTR;
-    double m_velocityWorldU_MPS;
-    double m_velocityWorldV_MPS;
-    double m_velocityWorldW_MPS;
-    double m_velocityBodyU_MPS;
-    double m_velocityBodyV_MPS;
-    double m_velocityBodyW_MPS;
-    double m_accelerationWorldAX_MPS2;
-    double m_accelerationWorldAY_MPS2;
-    double m_accelerationWorldAZ_MPS2;
+    double m_velocityNEDX_MPS;
+    double m_velocityNEDY_MPS;
+    double m_velocityNEDZ_MPS;
     double m_accelerationBodyAX_MPS2;
     double m_accelerationBodyAY_MPS2;
     double m_accelerationBodyAZ_MPS2;
-    double m_windX_MPS;
-    double m_windY_MPS;
-    double m_windZ_MPSPS;
-    double m_propRPM;
-    double m_heliMainRotorRPM;
-    double m_batteryVoltage_VOLTS;
-    double m_batteryCurrentDraw_AMPS;
-    double m_batteryRemainingCapacity_MAH;
-    double m_fuelRemaining_OZ;
-    bool m_isLocked;
-    bool m_hasLostComponents;
-    bool m_anEngineIsRunning;
-    bool m_isTouchingGround;
-    bool m_flightAxisControllerIsActive;
-    char* m_currentAircraftStatus;
-    bool m_resetButtonHasBeenPressed;
-} rfValues_t;
+} gzValues_t;
 
-rfValues_t rfValues; 
+gzValues_t gzValues; 
 
 /*
 static bool getChannelValues(const char* response, uint16_t* channelValues)
@@ -334,45 +309,36 @@ static void exchangeData(void)
 //=============================BELOW==============================//
 void updateState(const fdm_packet* pkt)
 {
-/*
-    static double last_timestamp = 0; // in seconds
-    static uint64_t last_realtime = 0; // in uS
-    static struct timespec last_ts; // last packet
 
-    struct timespec now_ts;
-    clock_gettime(CLOCK_MONOTONIC, &now_ts);
+//    uint16_t channelValues[GZ_MAX_CHANNEL_COUNT];
+//    getChannelValues(response, channelValues);
+    rxSimSetChannelValue(rcPkt.channels, GZ_MAX_CHANNEL_COUNT);
 
-    const uint64_t realtime_now = micros64_real();
-    if (realtime_now > last_realtime + 500*1e3) { // 500ms timeout
-        last_timestamp = pkt->timestamp;
-        last_realtime = realtime_now;
-        sendMotorUpdate();
-        return;
+    double servoValues[GZ_MAX_PWM_OUTS] = { 0 };    
+    for (int i = 0; i < mappingCount; i++) {
+        if (pwmMapping[i] & 0x80){ // Motor
+            servoValues[i] = PWM_TO_FLOAT_0_1(motor[pwmMapping[i] & 0x7f]);
+        } else { 
+            servoValues[i] = PWM_TO_FLOAT_0_1(servo[pwmMapping[i]]);
+        }
     }
 
-    const double deltaSim = pkt->timestamp - last_timestamp;  // in seconds
-    if (deltaSim < 0) { // don't use old packet
-        return;
-    }
+//    double outScale = 1000.0;
 
-    int16_t x,y,z;
-    x = constrain(-pkt->imu_linear_acceleration_xyz[0] * ACC_SCALE, -32767, 32767);
-    y = constrain(-pkt->imu_linear_acceleration_xyz[1] * ACC_SCALE, -32767, 32767);
-    z = constrain(-pkt->imu_linear_acceleration_xyz[2] * ACC_SCALE, -32767, 32767);
-    fakeAccSet(fakeAccDev, x, y, z);
-//    printf("[acc]%lf,%lf,%lf\n", pkt->imu_linear_acceleration_xyz[0], pkt->imu_linear_acceleration_xyz[1], pkt->imu_linear_acceleration_xyz[2]);
+    pwmPkt.motor_speed[3] = servoValues[0] ;/// outScale;
+    pwmPkt.motor_speed[0] = servoValues[1] ;/// outScale;
+    pwmPkt.motor_speed[1] = servoValues[2] ;/// outScale;
+    pwmPkt.motor_speed[2] = servoValues[3] ;/// outScale;
+//    pwmPkt.motor_speed[3] = 100.0 / outScale;
+//    pwmPkt.motor_speed[0] = 100.0 / outScale;
+//    pwmPkt.motor_speed[1] = 100.0 / outScale;
+//    pwmPkt.motor_speed[2] = 100.0 / outScale;
 
-    x = constrain(pkt->imu_angular_velocity_rpy[0] * GYRO_SCALE * RAD2DEG, -32767, 32767);
-    y = constrain(-pkt->imu_angular_velocity_rpy[1] * GYRO_SCALE * RAD2DEG, -32767, 32767);
-    z = constrain(-pkt->imu_angular_velocity_rpy[2] * GYRO_SCALE * RAD2DEG, -32767, 32767);
-    fakeGyroSet(fakeGyroDev, x, y, z);
-//    printf("[gyr]%lf,%lf,%lf\n", pkt->imu_angular_velocity_rpy[0], pkt->imu_angular_velocity_rpy[1], pkt->imu_angular_velocity_rpy[2]);
 
-    // temperature in 0.01 C = 25 deg
-    fakeBaroSet(pkt->pressure, 2500);
-#if !defined(USE_IMU_CALC)
-#if defined(SET_IMU_FROM_EULER)
-    // set from Euler
+
+
+    gzValues.m_aircraftPositionX_MTR = pkt->position_xyz[0];
+    gzValues.m_aircraftPositionY_MTR = pkt->position_xyz[1];
     double qw = pkt->imu_orientation_quat[0];
     double qx = pkt->imu_orientation_quat[1];
     double qy = pkt->imu_orientation_quat[2];
@@ -395,41 +361,103 @@ void updateState(const fdm_packet* pkt)
     double t3 = +2.0 * (qw * qz + qx * qy);
     double t4 = +1.0 - 2.0 * (ysqr + qz * qz);
     zf = atan2(t3, t4) * RAD2DEG;
-    imuSetAttitudeRPY(xf, -yf, zf); // yes! pitch was inverted!!
-#else
-    imuSetAttitudeQuat(pkt->imu_orientation_quat[0], pkt->imu_orientation_quat[1], pkt->imu_orientation_quat[2], pkt->imu_orientation_quat[3]);
-#endif
-#endif
 
-#if defined(SIMULATOR_IMU_SYNC)
-    imuSetHasNewData(deltaSim*1e6);
-    imuUpdateAttitude(micros());
-#endif
+	gzValues.m_roll_DEG = xf;
+	gzValues.m_pitch_DEG = yf;
+	gzValues.m_azimuth_DEG = zf;
+    gzValues.m_altitudeASL_MTR = -pkt->position_xyz[2];
+	gzValues.m_velocityNEDX_MPS = pkt->velocity_xyz[0];
+	gzValues.m_velocityNEDY_MPS = pkt->velocity_xyz[1];
+	gzValues.m_groundspeed_MPS = sqrt(gzValues.m_velocityNEDX_MPS*gzValues.m_velocityNEDX_MPS + gzValues.m_velocityNEDY_MPS*gzValues.m_velocityNEDY_MPS); 
+	gzValues.m_accelerationBodyAX_MPS2 = pkt->imu_linear_acceleration_xyz[0];
+	gzValues.m_accelerationBodyAY_MPS2 = pkt->imu_linear_acceleration_xyz[1];
+	gzValues.m_accelerationBodyAZ_MPS2 = pkt->imu_linear_acceleration_xyz[2];
+	gzValues.m_rollRate_DEGpSEC = pkt->imu_angular_velocity_rpy[0];
+	gzValues.m_pitchRate_DEGpSEC = pkt->imu_angular_velocity_rpy[1];
+	gzValues.m_yawRate_DEGpSEC = pkt->imu_angular_velocity_rpy[2];
+    gzValues.m_orientationQuaternion_X = qx;
+    gzValues.m_orientationQuaternion_Y = qy;
+    gzValues.m_orientationQuaternion_Z = qz;
+    gzValues.m_orientationQuaternion_W = qw;
 
+    double lat, lon;
+    fakeCoords(FAKE_LAT, FAKE_LON, gzValues.m_aircraftPositionX_MTR, -gzValues.m_aircraftPositionY_MTR, &lat, &lon);
+    
+    int16_t course = (int16_t)round(convertAzimuth(gzValues.m_azimuth_DEG) * 10);
+    int32_t altitude = (int32_t)round(gzValues.m_altitudeASL_MTR * 100);
+    gpsFakeSet(
+        GPS_FIX_3D,
+        16,
+        (int32_t)round(lat * 10000000),
+        (int32_t)round(lon * 10000000),
+        altitude,
+        (int16_t)round(gzValues.m_groundspeed_MPS * 100),
+        course,
+        0, 
+        0,
+        0,
+        0
+    );
 
-    if (deltaSim < 0.02 && deltaSim > 0) { // simulator should run faster than 50Hz
-//        simRate = simRate * 0.5 + (1e6 * deltaSim / (realtime_now - last_realtime)) * 0.5;
-        struct timespec out_ts;
-        timeval_sub(&out_ts, &now_ts, &last_ts);
-        simRate = deltaSim / (out_ts.tv_sec + 1e-9*out_ts.tv_nsec);
+    const int16_t roll_inav = (int16_t)round(gzValues.m_roll_DEG * 10);
+    const int16_t pitch_inav = (int16_t)round(-gzValues.m_pitch_DEG * 10);
+    const int16_t yaw_inav = course;
+    if (!useImu) {
+        imuSetAttitudeRPY(roll_inav, pitch_inav, yaw_inav);
+        imuUpdateAttitude(micros());
     }
-//    printf("simRate = %lf, millis64 = %lu, millis64_real = %lu, deltaSim = %lf\n", simRate, millis64(), millis64_real(), deltaSim*1e6);
 
-    last_timestamp = pkt->timestamp;
-    last_realtime = micros64_real();
+    // Gazebo acc data is weird if the aircraft has not yet taken off due to ground collisions. Fake 1G in horizontale position
+    int16_t accX = 0;
+    int16_t accY = 0;
+    int16_t accZ = 0;
+    if (gzValues.m_altitudeASL_MTR < 0.02) {
+        accX = 0;
+        accY = 0;
+        accZ = (int16_t)(GRAVITY_MSS * 1000.0f);
+    } else {
+         accX = constrainToInt16(gzValues.m_accelerationBodyAX_MPS2 * 1000);
+         accY = constrainToInt16(-gzValues.m_accelerationBodyAY_MPS2 * 1000);
+         accZ = constrainToInt16(-gzValues.m_accelerationBodyAZ_MPS2 * 1000);
+    }
 
-    last_ts.tv_sec = now_ts.tv_sec;
-    last_ts.tv_nsec = now_ts.tv_nsec;
+    fakeAccSet(accX, accY, accZ);
+    
+    fakeGyroSet(
+        constrainToInt16(gzValues.m_rollRate_DEGpSEC * (double)16.0),
+        constrainToInt16(-gzValues.m_pitchRate_DEGpSEC * (double)16.0),
+        constrainToInt16(gzValues.m_yawRate_DEGpSEC * (double)16.0)
+    );
 
-    pthread_mutex_unlock(&updateLock); // can send PWM output now
+    fakeBaroSet(altitudeToPressure(altitude), DEGREES_TO_CENTIDEGREES(21));
+    fakePitotSetAirspeed(gzValues.m_groundspeed_MPS * 100);
 
-#if defined(SIMULATOR_GYROPID_SYNC)
-    pthread_mutex_unlock(&mainLoopLock); // can run main loop
-#endif
-*/
+    fakeBattSensorSetVbat((uint16_t)round(16.0 * 100));
+    fakeBattSensorSetAmperage((uint16_t)round(20.0 * 100)); 
+
+    fpQuaternion_t quat;
+    fpVector3_t north;
+    north.x = 1.0f;
+    north.y = 0;
+    north.z = 0;
+    computeQuaternionFromRPY(&quat, roll_inav, pitch_inav, yaw_inav);
+    transformVectorEarthToBody(&north, &quat);
+    fakeMagSet(
+        constrainToInt16(north.x * 16000.0f),
+        constrainToInt16(north.y * 16000.0f),
+        constrainToInt16(north.z * 16000.0f)
+    );
+
 	if(!isInitalised){
+		printf("initialized\n");
 		isInitalised = true;
 	}
+
+//    pthread_mutex_unlock(&updateLock); // can send PWM output now
+
+    udpSend(&pwmLink, &pwmPkt, sizeof(servo_packet));
+    printf("[pwm]:%f,%f,%f,%f\n", servoValues[0], servoValues[1], servoValues[2], servoValues[3]);
+//    udpSend(&pwmRawLink, &pwmRawPkt, sizeof(servo_packet_raw));
 
 }
 
@@ -512,6 +540,11 @@ bool simGazeboInit(char* ip, uint8_t* mapping, uint8_t mapCount, bool imu)
     memcpy(pwmMapping, mapping, mapCount);
     mappingCount = mapCount;
     useImu = imu;
+
+//    if (pthread_mutex_init(&updateLock, NULL) != 0) {
+//        printf("Create updateLock error!\n");
+//        exit(1);
+//    }
 
     ret = pthread_create(&tcpWorker, NULL, tcpThread, NULL);
     if (ret != 0) {
