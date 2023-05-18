@@ -208,7 +208,6 @@ void pidController(float dT);
 
 float pidRateToRcCommand(float rateDPS, uint8_t rate);
 int16_t pidAngleToRcCommand(float angleDeciDegrees, int16_t maxInclination);
-int16_t lateralAccelToRcCommand(float accel, int16_t maxAccel);
 
 enum {
     HEADING_HOLD_DISABLED = 0,

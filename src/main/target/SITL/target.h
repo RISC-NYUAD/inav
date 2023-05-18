@@ -32,6 +32,7 @@
 
 #define TARGET_BOARD_IDENTIFIER "SITL"
 #define USBD_PRODUCT_STRING  "SITL"
+#define TARGET_MOTOR_COUNT 4
 
 #define REQUIRE_PRINTF_LONG_SUPPORT
 
@@ -195,6 +196,7 @@ char *strnstr(const char *s, const char *find, size_t slen);
 
 #define SIMULATOR_MAX_RC_CHANNELS   16
 #define SIMULATOR_MAX_PWM_CHANNELS  16
+#define MAX_PWM_OUTPUT_PORTS 8
 
 typedef struct {
     double timestamp;                   // in seconds

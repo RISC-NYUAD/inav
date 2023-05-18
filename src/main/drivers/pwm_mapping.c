@@ -77,6 +77,7 @@ static const motorProtocolProperties_t motorProtocolProperties[] = {
     [PWM_TYPE_DSHOT600]     = { .usesHwTimer = true,    .isDSHOT = true },
 };
 
+
 pwmInitError_e getPwmInitError(void)
 {
     return pwmInitError;
@@ -86,6 +87,7 @@ const char * getPwmInitErrorMessage(void)
 {
     return pwmInitErrorMsg[pwmInitError];
 }
+
 
 const motorProtocolProperties_t * getMotorProtocolProperties(motorPwmProtocolTypes_e proto)
 {

@@ -416,12 +416,6 @@ int16_t pidAngleToRcCommand(float angleDeciDegrees, int16_t maxInclination)
     return scaleRangef((float) angleDeciDegrees, (float) -maxInclination, (float) maxInclination, -500.0f, 500.0f);
 }
 
-int16_t lateralAccelToRcCommand(float accel, int16_t maxAccel)
-{
-    accel = constrainf(accel, (float) -maxAccel, (float) maxAccel);
-    return scaleRangef((float) accel, (float) -maxAccel, (float) maxAccel, -500.0f, 500.0f);
-}
-
 /*
 Map stick positions to desired rotatrion rate in given axis.
 Rotation rate in dps at full stick deflection is defined by axis rate measured in dps/10
@@ -852,6 +846,7 @@ static void FAST_CODE NOINLINE pidApplyMulticopterRateController(pidState_t *pid
     applyItermLimiting(pidState);
 
     axisPID[axis] = newOutputLimited;
+
 
 #ifdef USE_BLACKBOX
     axisPID_P[axis] = newPTerm;

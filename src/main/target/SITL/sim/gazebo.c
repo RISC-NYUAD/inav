@@ -335,8 +335,6 @@ void updateState(const fdm_packet* pkt)
 //    pwmPkt.motor_speed[2] = 100.0 / outScale;
 
 
-
-
     gzValues.m_aircraftPositionX_MTR = pkt->position_xyz[0];
     gzValues.m_aircraftPositionY_MTR = pkt->position_xyz[1];
     double qw = pkt->imu_orientation_quat[0];
@@ -458,10 +456,10 @@ void updateState(const fdm_packet* pkt)
     unlockMainPID();
 
 //    pthread_mutex_unlock(&updateLock); // can send PWM output now
-
     udpSend(&pwmLink, &pwmPkt, sizeof(servo_packet));
-    printf("[pwm]:%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\n", servoValues[0], servoValues[1], servoValues[2], servoValues[3],servoValues[4],servoValues[5],servoValues[6],servoValues[7],servoValues[8],servoValues[9],servoValues[10],servoValues[11]);
+//    printf("[pwm]:%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\n", servoValues[0], servoValues[1], servoValues[2], servoValues[3],servoValues[4],servoValues[5],servoValues[6],servoValues[7],servoValues[8],servoValues[9],servoValues[10],servoValues[11]);
 //    udpSend(&pwmRawLink, &pwmRawPkt, sizeof(servo_packet_raw));
+
 
 }
 

@@ -405,12 +405,6 @@ void resetMulticopterPositionController(void)
         lastAccelTargetY = 0.0f;
     }
 
-    if (mixerConfig()->platformType == PLATFORM_OMNICOPTER){
-      // TODO: add PID for ROLL and PITCH
-      posControl.rcAdjustment[4] = 0.0f;
-      posControl.rcAdjustment[5] = 0.0f;
-
-     }
 }
 
 bool adjustMulticopterPositionFromRCInput(int16_t rcPitchAdjustment, int16_t rcRollAdjustment)
@@ -661,39 +655,19 @@ static void updatePositionAccelController_MC(timeDelta_t deltaMicros, float maxA
     const float accelForward = newAccelX * posControl.actualState.cosYaw + newAccelY * posControl.actualState.sinYaw;
     const float accelRight = -newAccelX * posControl.actualState.sinYaw + newAccelY * posControl.actualState.cosYaw;
 
-    if (mixerConfig()->platformType == PLATFORM_OMNICOPTER){
-
-    // Set ROLL and PITCH to zero
-    // TODO: set ROLL and PITCH to desired angles provided from another
-    // function
-    // TODO: apply full rotation matrix 
-    const float desiredPitch = 0.0f;
-    const float desiredRoll = 0.0f;
-
-    posControl.rcAdjustment[ROLL] = constrain(RADIANS_TO_DECIDEGREES(desiredRoll), -maxBankAngle, maxBankAngle);
-    posControl.rcAdjustment[PITCH] = constrain(RADIANS_TO_DECIDEGREES(desiredPitch), -maxBankAngle, maxBankAngle);
-
-    posControl.rcAdjustment[AUX1] = accelForward;
-    posControl.rcAdjustment[AUX2] = accelRight;
-    } else {
     // Calculate banking angles
     const float desiredPitch = atan2_approx(accelForward, GRAVITY_CMSS);
     const float desiredRoll = atan2_approx(accelRight * cos_approx(desiredPitch), GRAVITY_CMSS);
 
     posControl.rcAdjustment[ROLL] = constrain(RADIANS_TO_DECIDEGREES(desiredRoll), -maxBankAngle, maxBankAngle);
     posControl.rcAdjustment[PITCH] = constrain(RADIANS_TO_DECIDEGREES(desiredPitch), -maxBankAngle, maxBankAngle);
-
-    posControl.rcAdjustment[AUX1] = 0.0f;
-    posControl.rcAdjustment[AUX2] = 0.0f;
-    }    
+    
 }
 
 static void applyMulticopterPositionController(timeUs_t currentTimeUs)
 {
     static timeUs_t previousTimePositionUpdate = 0;     // Occurs @ GPS update rate
     bool bypassPositionController;
-    double maxLateralAccel;
-    maxLateralAccel = (double) NAV_ACCELERATION_XY_MAX;
 
     // We should passthrough rcCommand is adjusting position in GPS_ATTI mode
     bypassPositionController = (navConfig()->general.flags.user_control_mode == NAV_GPS_ATTI) && posControl.flags.isAdjustingPosition;
@@ -732,15 +706,8 @@ static void applyMulticopterPositionController(timeUs_t currentTimeUs)
     }
 
     if (!bypassPositionController) {
-    if (mixerConfig()->platformType == PLATFORM_OMNICOPTER){
-        rcCommand[AUX1] = lateralAccelToRcCommand(posControl.rcAdjustment[AUX1], maxLateralAccel);
-        rcCommand[AUX2] = lateralAccelToRcCommand(posControl.rcAdjustment[AUX2], maxLateralAccel);
-    }else{ 
-
         rcCommand[PITCH] = pidAngleToRcCommand(posControl.rcAdjustment[PITCH], pidProfile()->max_angle_inclination[FD_PITCH]);
         rcCommand[ROLL] = pidAngleToRcCommand(posControl.rcAdjustment[ROLL], pidProfile()->max_angle_inclination[FD_ROLL]);
-    }
-
     }
 }
 
