@@ -944,6 +944,7 @@ const char * const table_platform_type[] = {
 	"TRICOPTER",
 	"ROVER",
 	"BOAT",
+	"OMNICOPTER",
 };
 const char * const table_rangefinder_hardware[] = {
 	"NONE",

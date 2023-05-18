@@ -450,13 +450,17 @@ void updateState(const fdm_packet* pkt)
 
 	if(!isInitalised){
 		printf("initialized\n");
+        ENABLE_ARMING_FLAG(SIMULATOR_MODE_SITL);
+        // Aircraft can wobble on the runway and prevents calibration of the accelerometer
+        ENABLE_STATE(ACCELEROMETER_CALIBRATED);
 		isInitalised = true;
 	}
+    unlockMainPID();
 
 //    pthread_mutex_unlock(&updateLock); // can send PWM output now
 
     udpSend(&pwmLink, &pwmPkt, sizeof(servo_packet));
-    printf("[pwm]:%f,%f,%f,%f\n", servoValues[0], servoValues[1], servoValues[2], servoValues[3]);
+    printf("[pwm]:%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\n", servoValues[0], servoValues[1], servoValues[2], servoValues[3],servoValues[4],servoValues[5],servoValues[6],servoValues[7],servoValues[8],servoValues[9],servoValues[10],servoValues[11]);
 //    udpSend(&pwmRawLink, &pwmRawPkt, sizeof(servo_packet_raw));
 
 }
