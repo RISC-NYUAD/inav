@@ -524,6 +524,7 @@ void FAST_CODE mixTable()
     int16_t throttleRange;
     int16_t throttleMin, throttleMax;
     int16_t lateralRangeMax;
+    int16_t minMotor = 0;
     if (mixerConfig()->platformType == PLATFORM_OMNICOPTER){
 
       throttleRangeMin = throttleIdleValue;
@@ -549,6 +550,20 @@ void FAST_CODE mixTable()
             if (currentMotorStatus != MOTOR_RUNNING) {
                 motor[i] = motorValueWhenStopped;
             }
+
+            // Keep track of lowest propeller speed
+            if (minMotor > motor[i]){
+              minMotor = motor[i];}
+        }
+
+        // if minMotor < throttleRangeMin
+        // Correct all motor speeds to ensure least propeller speed is >
+        // throttleRangeMin
+        // Assumption made here is that all 1s vector \in nullspace(mixer)
+        if (minMotor < throttleRangeMin){
+        for (int i = 0; i < motorCount; i++){
+            motor[i] = motor[i] - minMotor + throttleRangeMin;
+        }
         }
     } else {
         for (int i = 0; i < motorCount; i++) {
