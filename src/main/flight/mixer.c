@@ -135,7 +135,6 @@ int getThrottleIdleValue(void)
 
 static void computeMotorCount(void)
 {
-#if !defined(SITL_BUILD)
     motorCount = 0;
     for (int i = 0; i < MAX_SUPPORTED_MOTORS; i++) {
         // check if done
@@ -144,9 +143,6 @@ static void computeMotorCount(void)
         }
         motorCount++;
     }
-#else
-	motorCount = 4;
-#endif
 }
 
 uint8_t getMotorCount(void) {
