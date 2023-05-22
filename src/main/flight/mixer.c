@@ -357,8 +357,8 @@ static void applyTurtleModeToMotors(void) {
 
 void FAST_CODE writeMotors(void)
 {    
-	printf("%d\n",motorCount);
-#if !defined(SITL_BUILD)
+//	printf("%d\n",motorCount);
+
     for (int i = 0; i < motorCount; i++) {
         uint16_t motorValue;
 
@@ -438,10 +438,9 @@ void FAST_CODE writeMotors(void)
         // We don't define USE_DSHOT
         motorValue = motor[i];
 #endif
-
+		//printf("%d\n",motorValue);
         pwmWriteMotor(i, motorValue);
     }
-#endif
 }
 
 void writeAllMotors(int16_t mc)
@@ -462,9 +461,9 @@ void stopMotors(void)
 
 void stopPwmAllMotors(void)
 {
-#if !defined(SITL_BUILD)
+
     pwmShutdownPulsesForAllMotors(motorCount);
-#endif
+
 }
 
 static int getReversibleMotorsThrottleDeadband(void)
@@ -664,6 +663,7 @@ void FAST_CODE mixTable()
                 motor[i] = motorZeroCommand;
             }
 #endif
+//			printf("%d:%d\n",i,motor[i]);
         }
     } else {
         for (int i = 0; i < motorCount; i++) {

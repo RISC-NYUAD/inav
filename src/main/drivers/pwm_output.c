@@ -22,7 +22,7 @@
 
 #include "platform.h"
 
-#if !defined(SITL_BUILD)
+//#if !defined(SITL_BUILD)
 
 #include "build/debug.h"
 
@@ -474,7 +474,7 @@ void pwmMotorPreconfigure(void)
 /**
  * This function return the PWM frequency based on ESC protocol. We allow customer rates only for Brushed motors
  */ 
-
+#if !defined(SITL_BUILD)
 uint32_t getEscUpdateFrequency(void) {
     switch (initMotorProtocol) {
         case PWM_TYPE_BRUSHED:
@@ -501,7 +501,7 @@ uint32_t getEscUpdateFrequency(void) {
 
     }
 }
-
+#endif
 
 bool pwmMotorConfig(const timerHardware_t *timerHardware, uint8_t motorIndex, bool enableOutput)
 {
@@ -637,4 +637,4 @@ void beeperPwmInit(ioTag_t tag, uint16_t frequency)
         pwmOutConfigTimer(beeperPwm, tch, PWM_TIMER_HZ, 1000000 / beeperFrequency, (1000000 / beeperFrequency) / 2);
     }
 }
-#endif
+//#endif

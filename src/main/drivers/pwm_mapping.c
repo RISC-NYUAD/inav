@@ -21,7 +21,7 @@
 
 #include "platform.h"
 
-#if !defined(SITL_BUILD)
+//#if !defined(SITL_BUILD)
 
 #include "build/debug.h"
 #include "common/log.h"
@@ -77,7 +77,7 @@ static const motorProtocolProperties_t motorProtocolProperties[] = {
     [PWM_TYPE_DSHOT600]     = { .usesHwTimer = true,    .isDSHOT = true },
 };
 
-
+#if !defined(SITL_BUILD)
 pwmInitError_e getPwmInitError(void)
 {
     return pwmInitError;
@@ -87,7 +87,7 @@ const char * getPwmInitErrorMessage(void)
 {
     return pwmInitErrorMsg[pwmInitError];
 }
-
+#endif
 
 const motorProtocolProperties_t * getMotorProtocolProperties(motorPwmProtocolTypes_e proto)
 {
@@ -401,4 +401,4 @@ bool pwmMotorAndServoInit(void)
     return (pwmInitError == PWM_INIT_ERROR_NONE);
 }
 
-#endif
+//#endif

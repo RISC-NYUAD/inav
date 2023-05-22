@@ -307,6 +307,16 @@ static void exchangeData(void)
 */
 
 //=============================BELOW==============================//
+double inavpwm_to_0_1(uint16_t motor_pwm){
+	double m0 = (double) (motor_pwm)/2000.0;
+	if(m0<=0.0){
+	  m0 = 0.0;
+	}if(m0>=0.94){
+	  m0 = 0.94;
+	}
+	return m0;
+}
+
 void updateState(const fdm_packet* pkt)
 {
 
@@ -315,6 +325,7 @@ void updateState(const fdm_packet* pkt)
     rxSimSetChannelValue(rcPkt.channels, GZ_MAX_CHANNEL_COUNT);
 
     double servoValues[GZ_MAX_PWM_OUTS] = { 0 };    
+/*
     for (int i = 0; i < mappingCount; i++) {
         if (pwmMapping[i] & 0x80){ // Motor
             servoValues[i] = PWM_TO_FLOAT_0_1(motor[pwmMapping[i] & 0x7f]);
@@ -322,17 +333,16 @@ void updateState(const fdm_packet* pkt)
             servoValues[i] = PWM_TO_FLOAT_0_1(servo[pwmMapping[i]]);
         }
     }
-
+*/
 //    double outScale = 1000.0;
-
+	for (int i = 0 ; i < GZ_MAX_PWM_OUTS ; i++){
+	  //printf("%d\n",motor[i]);
+	  servoValues[i] = inavpwm_to_0_1(motor[i]);
+	}
     pwmPkt.motor_speed[3] = servoValues[0] ;/// outScale;
     pwmPkt.motor_speed[0] = servoValues[1] ;/// outScale;
     pwmPkt.motor_speed[1] = servoValues[2] ;/// outScale;
     pwmPkt.motor_speed[2] = servoValues[3] ;/// outScale;
-//    pwmPkt.motor_speed[3] = 100.0 / outScale;
-//    pwmPkt.motor_speed[0] = 100.0 / outScale;
-//    pwmPkt.motor_speed[1] = 100.0 / outScale;
-//    pwmPkt.motor_speed[2] = 100.0 / outScale;
 
 
     gzValues.m_aircraftPositionX_MTR = pkt->position_xyz[0];
