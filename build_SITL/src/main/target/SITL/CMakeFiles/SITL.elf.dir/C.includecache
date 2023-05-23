@@ -4397,6 +4397,8 @@ math.h
 -
 platform.h
 -
+navigation/navigation_private.h
+-
 build/build_config.h
 /home/vulcan3/inav/src/main/flight/build/build_config.h
 build/debug.h

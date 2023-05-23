@@ -2910,7 +2910,8 @@ void updateClimbRateToAltitudeController(float desiredClimbRate, climbRateToAlti
         }
         else {
             // Multicopter climb-rate control is closed-loop, it's possible to directly calculate desired altitude setpoint to yield the required RoC/RoD
-            posControl.desiredState.pos.z = altitudeToUse + (desiredClimbRate / posControl.pids.pos[Z].param.kP);
+            posControl.desiredState.pos.z = altitudeToUse + (desiredClimbRate / posControl.pids.pos[Z].param.kP); //TODO
+			//printf("Zdes: %.2f\n",posControl.desiredState.pos.z);
         }
 
         lastUpdateTimeUs = currentTimeUs;

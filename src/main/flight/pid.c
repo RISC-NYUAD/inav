@@ -21,6 +21,8 @@
 
 #include <platform.h>
 
+#include <navigation/navigation_private.h>
+
 #include "build/build_config.h"
 #include "build/debug.h"
 
@@ -907,7 +909,8 @@ float pidHeadingHold(float dT)
     float headingHoldRate;
 
     int16_t error = DECIDEGREES_TO_DEGREES(attitude.values.yaw) - headingHoldTarget;
-
+	//printf("%d:%d\n",error,headingHoldTarget);
+	//printf("%.2f,%.2f\n",navGetCurrentActualPositionAndVelocity()->pos.x,navGetCurrentActualPositionAndVelocity()->pos.y);
     /*
      * Convert absolute error into relative to current heading
      */

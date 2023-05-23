@@ -73,6 +73,7 @@ static char simulator_ip[32] = "127.0.0.1";
 #define PORT_STATE      9003    // In
 #define PORT_RC         9004    // In
 #define RAD2DEG (180.0 / M_PI)
+#define DEG2RAD (M_PI / 180.0)
 
 static fdm_packet fdmPkt;
 static rc_packet rcPkt;
@@ -389,7 +390,10 @@ void updateState(const fdm_packet* pkt)
     gzValues.m_orientationQuaternion_W = qw;
 
     double lat, lon;
-    fakeCoords(FAKE_LAT, FAKE_LON, gzValues.m_aircraftPositionX_MTR, -gzValues.m_aircraftPositionY_MTR, &lat, &lon);
+//	double rotated_x = cos(zf*DEG2RAD)*gzValues.m_aircraftPositionY_MTR + sin(zf*DEG2RAD)*gzValues.m_aircraftPositionX_MTR ;
+//	double rotated_y = sin(zf*DEG2RAD)*gzValues.m_aircraftPositionY_MTR - cos(zf*DEG2RAD)*gzValues.m_aircraftPositionX_MTR ;
+//    fakeCoords(FAKE_LAT, FAKE_LON, rotated_x, rotated_y, &lat, &lon);
+    fakeCoords(FAKE_LAT, FAKE_LON, gzValues.m_aircraftPositionY_MTR, -gzValues.m_aircraftPositionX_MTR, &lat, &lon);
     
     int16_t course = (int16_t)round(convertAzimuth(gzValues.m_azimuth_DEG) * 10);
     int32_t altitude = (int32_t)round(gzValues.m_altitudeASL_MTR * 100);
@@ -409,17 +413,24 @@ void updateState(const fdm_packet* pkt)
 
     const int16_t roll_inav = (int16_t)round(gzValues.m_roll_DEG * 10);
     const int16_t pitch_inav = (int16_t)round(-gzValues.m_pitch_DEG * 10);
-    const int16_t yaw_inav = course;
+    const int16_t yaw_inav = course;//(int16_t)round(gzValues.m_azimuth_DEG * 10);
     if (!useImu) {
         imuSetAttitudeRPY(roll_inav, pitch_inav, yaw_inav);
         imuUpdateAttitude(micros());
     }
 
+
+    int32_t altitudeOverGround = altitude;
+    if (altitudeOverGround > 20 && altitudeOverGround <= 10000) {
+        fakeRangefindersSetData(altitudeOverGround);
+    } else {
+        fakeRangefindersSetData(20);
+    }
     // Gazebo acc data is weird if the aircraft has not yet taken off due to ground collisions. Fake 1G in horizontale position
     int16_t accX = 0;
     int16_t accY = 0;
     int16_t accZ = 0;
-    if (gzValues.m_altitudeASL_MTR < 0.02) {
+    if (gzValues.m_altitudeASL_MTR < 0.01) {
         accX = 0;
         accY = 0;
         accZ = (int16_t)(GRAVITY_MSS * 1000.0f);
@@ -438,7 +449,7 @@ void updateState(const fdm_packet* pkt)
     );
 
     fakeBaroSet(altitudeToPressure(altitude), DEGREES_TO_CENTIDEGREES(21));
-    fakePitotSetAirspeed(gzValues.m_groundspeed_MPS * 100);
+    fakePitotSetAirspeed(0);
 
     fakeBattSensorSetVbat((uint16_t)round(16.0 * 100));
     fakeBattSensorSetAmperage((uint16_t)round(20.0 * 100)); 

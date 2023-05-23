@@ -72,7 +72,7 @@ static void updateAltitudeVelocityController_MC(timeDelta_t deltaMicros)
         navGetCurrentActualPositionAndVelocity()->pos.z,
         US2S(deltaMicros)
     );
-
+	//printf("%.2f,%.2f\n",posControl.desiredState.pos.z,navGetCurrentActualPositionAndVelocity()->pos.z);
     // hard limit desired target velocity to max_climb_rate
     float vel_max_z = 0.0f;
 
@@ -145,6 +145,7 @@ bool adjustMulticopterAltitudeFromRCInput(void)
     }
     else {
         const int16_t rcThrottleAdjustment = applyDeadbandRescaled(rcCommand[THROTTLE] - altHoldThrottleRCZero, rcControlsConfig()->alt_hold_deadband, -500, 500);
+		//printf("RC:%d, Zero:%d\n",rcCommand[THROTTLE],altHoldThrottleRCZero);
         if (rcThrottleAdjustment) {
             // set velocity proportional to stick movement
             float rcClimbRate;
@@ -420,12 +421,12 @@ bool adjustMulticopterPositionFromRCInput(int16_t rcPitchAdjustment, int16_t rcR
             const float rcVelY = rcRollAdjustment * navConfig()->general.max_manual_speed / (float)(500 - rcControlsConfig()->pos_hold_deadband);
 
             // Rotate these velocities from body frame to to earth frame
-            const float neuVelX = rcVelX * posControl.actualState.cosYaw - rcVelY * posControl.actualState.sinYaw;
-            const float neuVelY = rcVelX * posControl.actualState.sinYaw + rcVelY * posControl.actualState.cosYaw;
+            const float neuVelX = -rcVelX * posControl.actualState.cosYaw - rcVelY * posControl.actualState.sinYaw;
+            const float neuVelY = +rcVelX * posControl.actualState.sinYaw - rcVelY * posControl.actualState.cosYaw;
 
             // Calculate new position target, so Pos-to-Vel P-controller would yield desired velocity
             posControl.desiredState.pos.x = navGetCurrentActualPositionAndVelocity()->pos.x + (neuVelX / posControl.pids.pos[X].param.kP);
-            posControl.desiredState.pos.y = navGetCurrentActualPositionAndVelocity()->pos.y + (neuVelY / posControl.pids.pos[Y].param.kP);
+            posControl.desiredState.pos.y = navGetCurrentActualPositionAndVelocity()->pos.y + (neuVelY / posControl.pids.pos[Y].param.kP); //TODO
         }
 
         return true;
@@ -470,6 +471,7 @@ static void updatePositionVelocityController_MC(const float maxSpeed)
 {
     const float posErrorX = posControl.desiredState.pos.x - navGetCurrentActualPositionAndVelocity()->pos.x;
     const float posErrorY = posControl.desiredState.pos.y - navGetCurrentActualPositionAndVelocity()->pos.y;
+
 
     // Calculate target velocity
     float newVelX = posErrorX * posControl.pids.pos[X].param.kP;
@@ -652,12 +654,13 @@ static void updatePositionAccelController_MC(timeDelta_t deltaMicros, float maxA
     lastAccelTargetY = newAccelY;
 
     // Rotate acceleration target into forward-right frame (aircraft)
-    const float accelForward = newAccelX * posControl.actualState.cosYaw + newAccelY * posControl.actualState.sinYaw;
-    const float accelRight = -newAccelX * posControl.actualState.sinYaw + newAccelY * posControl.actualState.cosYaw;
-
+    const float accelForward = -newAccelX * posControl.actualState.cosYaw + newAccelY * posControl.actualState.sinYaw;
+    const float accelRight = -newAccelX * posControl.actualState.sinYaw - newAccelY * posControl.actualState.cosYaw;
     // Calculate banking angles
     const float desiredPitch = atan2_approx(accelForward, GRAVITY_CMSS);
     const float desiredRoll = atan2_approx(accelRight * cos_approx(desiredPitch), GRAVITY_CMSS);
+//    const float posErrorY = posControl.desiredState.pos.y - navGetCurrentActualPositionAndVelocity()->pos.y;
+//	printf("X_error: %.2f, Roll: %.2f\n",posErrorY, desiredRoll);
 
     posControl.rcAdjustment[ROLL] = constrain(RADIANS_TO_DECIDEGREES(desiredRoll), -maxBankAngle, maxBankAngle);
     posControl.rcAdjustment[PITCH] = constrain(RADIANS_TO_DECIDEGREES(desiredPitch), -maxBankAngle, maxBankAngle);

@@ -4264,6 +4264,7 @@ src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/pid.c.o
  ../src/main/flight/smith_predictor.h
  ../src/main/io/gps.h
  ../src/main/navigation/navigation.h
+ ../src/main/navigation/navigation_private.h
  ../src/main/platform.h
  ../src/main/programming/logic_condition.h
  ../src/main/rx/rx.h

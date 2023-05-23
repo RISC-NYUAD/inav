@@ -4263,6 +4263,7 @@ src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/pid.c.o: ../src/main/f
 src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/pid.c.o: ../src/main/flight/smith_predictor.h
 src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/pid.c.o: ../src/main/io/gps.h
 src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/pid.c.o: ../src/main/navigation/navigation.h
+src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/pid.c.o: ../src/main/navigation/navigation_private.h
 src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/pid.c.o: ../src/main/platform.h
 src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/pid.c.o: ../src/main/programming/logic_condition.h
 src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/pid.c.o: ../src/main/rx/rx.h
