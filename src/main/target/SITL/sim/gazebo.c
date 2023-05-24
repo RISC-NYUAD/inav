@@ -160,7 +160,7 @@ static double convertAzimuth(double azimuth)
     if (azimuth < 0) {
         azimuth += 360;
     }
-    return 360 - fmod(azimuth + 90, 360.0f);
+    return 360 - fmod(azimuth, 360.0f); //azimuth + 90
 }
 
 /*

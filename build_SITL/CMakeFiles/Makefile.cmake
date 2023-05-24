@@ -8,7 +8,7 @@ set(CMAKE_DEPENDS_GENERATOR "Unix Makefiles")
 set(CMAKE_MAKEFILE_DEPENDS
   "CMakeCache.txt"
   "../.git/HEAD"
-  "../.git/refs/heads/sitl-only"
+  "../.git/refs/heads/sitl-dc"
   "../CMakeLists.txt"
   "CMakeFiles/3.16.3/CMakeASMCompiler.cmake"
   "CMakeFiles/3.16.3/CMakeCCompiler.cmake"

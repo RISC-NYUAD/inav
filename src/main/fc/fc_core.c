@@ -911,7 +911,7 @@ void taskMainPidLoop(timeUs_t currentTimeUs)
     // Calculate stabilisation
     pidController(dT);
 
-    mixTable();
+    mixTable(dT);
 
     if (isMixerUsingServos()) {
         servoMixer(dT);

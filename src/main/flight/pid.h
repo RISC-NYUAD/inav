@@ -59,6 +59,7 @@ FP-PID has been rescaled to match LuxFloat (and MWRewrite) from Cleanflight 1.13
 
 #define TASK_AUX_RATE_HZ   100 //In Hz
 
+
 typedef enum {
     /* PID              MC      FW  */
     PID_ROLL,       //   +       +
@@ -187,6 +188,7 @@ PG_DECLARE(pidAutotuneConfig_t, pidAutotuneConfig);
 const pidBank_t * pidBank(void);
 pidBank_t * pidBankMutable(void);
 
+extern float OVERRIDE_OMNI[];
 extern int16_t axisPID[];
 extern int32_t axisPID_P[], axisPID_I[], axisPID_D[], axisPID_F[], axisPID_Setpoint[];
 

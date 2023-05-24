@@ -70,6 +70,7 @@
 #define USE_GPS_FAKE
 #define USE_RANGEFINDER_FAKE
 #define USE_RX_SIM
+#define PLATFORM_IS_OMNICOPTER
 
 #undef USE_DASHBOARD
 

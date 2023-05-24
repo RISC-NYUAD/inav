@@ -37,6 +37,7 @@
 #include "drivers/pwm_mapping.h"
 #include "drivers/time.h"
 
+#include "fc/fc_core.h"
 #include "fc/config.h"
 #include "fc/rc_controls.h"
 #include "fc/rc_modes.h"
@@ -51,6 +52,8 @@
 #include "flight/servos.h"
 
 #include "navigation/navigation.h"
+#include "navigation/navigation_private.h"
+#include "navigation/navigation_pos_estimator_private.h"
 
 #include "rx/rx.h"
 
@@ -73,6 +76,8 @@ static EXTENDED_FASTRAM int throttleDeadbandHigh = 0;
 static EXTENDED_FASTRAM int throttleRangeMin = 0;
 static EXTENDED_FASTRAM int throttleRangeMax = 0;
 static EXTENDED_FASTRAM int8_t motorYawMultiplier = 1;
+
+static float J_z = 0.0f;
 
 /*
 // TODO: add correct mixing table for OMNICOPTER
@@ -479,7 +484,7 @@ static int getReversibleMotorsThrottleDeadband(void)
     return feature(FEATURE_MOTOR_STOP) ? reversibleMotorsConfig()->neutral : directionValue;
 }
 
-void FAST_CODE mixTable()
+void FAST_CODE mixTable(float dT)
 {
 #ifdef USE_DSHOT
     if (FLIGHT_MODE(TURTLE_MODE)) {
@@ -487,7 +492,114 @@ void FAST_CODE mixTable()
         return;
     }
 #endif
+#ifdef PLATFORM_IS_OMNICOPTER
 
+//	printf("Py:%.2f, Vy:%.2f\n",py,vy);
+    int16_t input[3];   // RPY, range [-500:+500]
+    input[ROLL] = axisPID[ROLL];
+    input[PITCH] = axisPID[PITCH];
+    input[YAW] = axisPID[YAW];
+
+	int16_t real_rll = attitude.values.roll;
+	int16_t real_pit = attitude.values.pitch;
+	int16_t real_yaw = attitude.values.yaw; //in decidegrees i.e. *0.1 turns it into degrees
+	float py = navGetCurrentActualPositionAndVelocity()->pos.y; //cm
+	float vy = navGetCurrentActualPositionAndVelocity()->vel.y; //cmps
+	float px = navGetCurrentActualPositionAndVelocity()->pos.x;
+	float vx = navGetCurrentActualPositionAndVelocity()->vel.x;
+	float pz = navGetCurrentActualPositionAndVelocity()->pos.z;
+	float vz = navGetCurrentActualPositionAndVelocity()->vel.z;
+
+    int16_t rpyMix[MAX_SUPPORTED_MOTORS];
+    int16_t rpyMixMax = 0; // assumption: symetrical about zero.
+    int16_t rpyMixMin = 0;
+	//HARDCODED BY CHOICE TO PROVE A POINT//
+	rpyMix[0] = -input[ROLL] + input[PITCH] - input[YAW];
+        if (rpyMix[0] > rpyMixMax) rpyMixMax = rpyMix[0];
+        if (rpyMix[0] < rpyMixMin) rpyMixMin = rpyMix[0];	
+	rpyMix[1] = -input[ROLL] - input[PITCH] + input[YAW];
+        if (rpyMix[1] > rpyMixMax) rpyMixMax = rpyMix[1];
+        if (rpyMix[1] < rpyMixMin) rpyMixMin = rpyMix[1];
+	rpyMix[2] = input[ROLL] + input[PITCH] + input[YAW];
+        if (rpyMix[2] > rpyMixMax) rpyMixMax = rpyMix[2];
+        if (rpyMix[2] < rpyMixMin) rpyMixMin = rpyMix[2];
+	rpyMix[3] = input[ROLL] - input[PITCH] - input[YAW];
+        if (rpyMix[3] > rpyMixMax) rpyMixMax = rpyMix[3];
+        if (rpyMix[3] < rpyMixMin) rpyMixMin = rpyMix[3];
+    int16_t rpyMixRange = rpyMixMax - rpyMixMin;
+    int16_t throttleRange;
+    int16_t throttleMin, throttleMax;
+
+//    mixerThrottleCommand = rcCommand[THROTTLE];
+	if(isNavHoldPositionActive()){
+		J_z += dT * 0.1 * (pz - 200.0);
+		if(J_z > 2000.0) J_z = 2000.0;
+		if(J_z < -2000.0) J_z = -2000.0;
+		float alt_ctrl = 1200.0 -0.3*(pz - posControl.desiredState.pos.z) - 0.08*(vz - 0.0) - 0.05*J_z ;
+		mixerThrottleCommand = (int) alt_ctrl;
+	}else{
+		mixerThrottleCommand = rcCommand[THROTTLE];
+	}
+	if(isNavHoldPositionActive()){
+		float x_ctrl = -0.2*(px - posControl.desiredState.pos.x) - 0.09*vx ;
+		float y_ctrl = -0.2*(py - posControl.desiredState.pos.y) - 0.09*vy ;
+		float x_body_ctrl = posControl.actualState.cosYaw * x_ctrl - posControl.actualState.sinYaw * y_ctrl ;
+		float y_body_ctrl = -posControl.actualState.sinYaw * x_ctrl - posControl.actualState.cosYaw * y_ctrl ;
+		float roll_cmd = x_body_ctrl * 1.0 ;
+		float pitch_cmd = y_body_ctrl * 1.0 ;
+		rcCommand[FD_PITCH] = pidAngleToRcCommand(pitch_cmd, pidProfile()->max_angle_inclination[FD_PITCH]);
+		rcCommand[FD_ROLL] = pidAngleToRcCommand(roll_cmd, pidProfile()->max_angle_inclination[FD_ROLL]);
+		OVERRIDE_OMNI[FD_ROLL] = roll_cmd;
+		OVERRIDE_OMNI[FD_PITCH] = pitch_cmd;
+		//printf("%d,%d\n",OVERRIDE_OMNI[FD_ROLL],OVERRIDE_OMNI[FD_PITCH]);
+		//printf("%.2f,%.2f\n",posControl.desiredState.pos.x,posControl.desiredState.pos.y);
+	}
+
+    throttleRangeMin = throttleIdleValue;
+    throttleRangeMax = motorConfig()->maxthrottle;
+    mixerThrottleCommand = ((mixerThrottleCommand - throttleRangeMin) * currentBatteryProfile->motor.throttleScale) + throttleRangeMin;
+    throttleMin = throttleRangeMin;
+    throttleMax = throttleRangeMax;
+    throttleRange = throttleMax - throttleMin;
+    #define THROTTLE_CLIPPING_FACTOR    0.33f
+    motorMixRange = (float)rpyMixRange / (float)throttleRange;
+    if (motorMixRange > 1.0f) {
+        for (int i = 0; i < motorCount; i++) {
+            rpyMix[i] /= motorMixRange;
+        }
+
+        // Allow some clipping on edges to soften correction response
+        throttleMin = throttleMin + (throttleRange / 2) - (throttleRange * THROTTLE_CLIPPING_FACTOR / 2);
+        throttleMax = throttleMin + (throttleRange / 2) + (throttleRange * THROTTLE_CLIPPING_FACTOR / 2);
+    } else {
+        throttleMin = MIN(throttleMin + (rpyMixRange / 2), throttleMin + (throttleRange / 2) - (throttleRange * THROTTLE_CLIPPING_FACTOR / 2));
+        throttleMax = MAX(throttleMax - (rpyMixRange / 2), throttleMin + (throttleRange / 2) + (throttleRange * THROTTLE_CLIPPING_FACTOR / 2));
+    }
+    // Now add in the desired throttle, but keep in a range that doesn't clip adjusted
+    // roll/pitch/yaw. This could move throttle down, but also up for those low throttle flips.
+    if (ARMING_FLAG(ARMED)) {
+        const motorStatus_e currentMotorStatus = getMotorStatus();
+        for (int i = 0; i < motorCount; i++) {
+            motor[i] = rpyMix[i] + constrain(mixerThrottleCommand * 1.0, throttleMin, throttleMax); //the 1.0 here is also a config
+			
+            if (failsafeIsActive()) {
+                motor[i] = constrain(motor[i], motorConfig()->mincommand, motorConfig()->maxthrottle);
+            } else {
+                motor[i] = constrain(motor[i], throttleRangeMin, throttleRangeMax);
+            }
+
+            // Motor stop handling
+            if (currentMotorStatus != MOTOR_RUNNING) {
+                motor[i] = motorValueWhenStopped;
+            }
+        }
+    } else {
+        for (int i = 0; i < motorCount; i++) {
+            motor[i] = motor_disarmed[i];
+        }
+    }
+
+#else
     int16_t input[3];   // RPY, range [-500:+500]
     // Allow direct stick input to motors in passthrough mode on airplanes
     if (STATE(FIXED_WING_LEGACY) && FLIGHT_MODE(MANUAL_MODE)) {
@@ -521,48 +633,6 @@ void FAST_CODE mixTable()
     int16_t rpyMixRange = rpyMixMax - rpyMixMin;
     int16_t throttleRange;
     int16_t throttleMin, throttleMax;
-/*
-    int16_t lateralRangeMax;
-//    int16_t minMotor = 0;
-    if (mixerConfig()->platformType == PLATFORM_OMNICOPTER){
-
-      throttleRangeMin = throttleIdleValue;
-      throttleRangeMax = motorConfig()->maxthrottle;
-      lateralRangeMax = motorConfig()->maxLateral;
-      mixerThrottleCommand = constrain(rcCommand[THROTTLE], throttleRangeMin, throttleRangeMax);
-      mixerFxCommand = constrain(rcCommand[AUX1],  -lateralRangeMax, lateralRangeMax);
-      mixerFyCommand = constrain(rcCommand[AUX2],  -lateralRangeMax, lateralRangeMax);
-    if (ARMING_FLAG(ARMED)) {
-        const motorStatus_e currentMotorStatus = getMotorStatus();
-        for (int i = 0; i < motorCount; i++) {
-            motor[i] = rpyMix[i] + 
-                        mixerThrottleCommand * currentMixer[i].throttle +
-                        mixerFxCommand * currentMixer[i].fx +
-                        mixerFyCommand * currentMixer[i].fy;
-
-            if (failsafeIsActive()) {
-                motor[i] = constrain(motor[i], motorConfig()->mincommand, motorConfig()->maxthrottle);
-            } else {
-                motor[i] = constrain(motor[i], throttleRangeMin, throttleRangeMax);
-            }
-            // Motor stop handling
-            if (currentMotorStatus != MOTOR_RUNNING) {
-                motor[i] = motorValueWhenStopped;
-            }
-
-            // Keep track of lowest propeller speed
-//            if (minMotor > motor[i]){
-//              minMotor = motor[i];}
-        }
-
-    } else {
-        for (int i = 0; i < motorCount; i++) {
-            motor[i] = motor_disarmed[i];
-        }
-    }
-
-    } else 
-*/
     // Find min and max throttle based on condition.
 #ifdef USE_PROGRAMMING_FRAMEWORK
     if (LOGIC_CONDITION_GLOBAL_FLAG(LOGIC_CONDITION_GLOBAL_FLAG_OVERRIDE_THROTTLE)) {
@@ -670,6 +740,7 @@ void FAST_CODE mixTable()
             motor[i] = motor_disarmed[i];
         }
     }
+#endif
 }
 
 int16_t getThrottlePercent(bool useScaled)

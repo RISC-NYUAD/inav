@@ -4172,6 +4172,7 @@ src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main
 src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main/build/debug.h
 src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main/common/axis.h
 src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main/common/bitarray.h
+src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main/common/calibration.h
 src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main/common/filter.h
 src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main/common/fp_pid.h
 src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main/common/maths.h
@@ -4191,6 +4192,7 @@ src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main
 src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main/fc/config.h
 src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main/fc/controlrate_profile.h
 src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main/fc/controlrate_profile_config_struct.h
+src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main/fc/fc_core.h
 src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main/fc/rc_controls.h
 src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main/fc/rc_modes.h
 src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main/fc/runtime_config.h
@@ -4203,11 +4205,14 @@ src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main
 src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main/flight/servos.h
 src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main/io/gps.h
 src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main/navigation/navigation.h
+src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main/navigation/navigation_pos_estimator_private.h
+src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main/navigation/navigation_private.h
 src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main/platform.h
 src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main/programming/logic_condition.h
 src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main/rx/rx.h
 src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main/sensors/battery.h
 src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main/sensors/battery_config_structs.h
+src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main/sensors/sensors.h
 src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main/target/SITL/target.h
 src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main/target/common.h
 src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main/target/common_post.h

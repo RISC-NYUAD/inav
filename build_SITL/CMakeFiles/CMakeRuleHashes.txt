@@ -3,4 +3,4 @@
 5f47daff281d4e335c662edde51631c5 CMakeFiles/targets
 f79404f342e6ab1bc47a81bd185c748e src/main/target/SITL/CMakeFiles/SITL
 d183e44c917987ea96ace4b1bb5933f3 src/main/target/SITL/CMakeFiles/clean_SITL
-01419a6e96688d23120aaff20bd7031e src/main/target/SITL/SITL/settings_generated.h
+65e715e88b61022db94de3881d7f794a src/main/target/SITL/SITL/settings_generated.h

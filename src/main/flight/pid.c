@@ -52,6 +52,7 @@
 #include "io/gps.h"
 
 #include "navigation/navigation.h"
+#include "navigation/navigation_private.h"
 
 #include "rx/rx.h"
 
@@ -120,6 +121,7 @@ static EXTENDED_FASTRAM pt1Filter_t fixedWingTpaFilter;
 // Thrust PID Attenuation factor. 0.0f means fully attenuated, 1.0f no attenuation is applied
 STATIC_FASTRAM bool pidGainsUpdateRequired;
 FASTRAM int16_t axisPID[FLIGHT_DYNAMICS_INDEX_COUNT];
+FASTRAM float OVERRIDE_OMNI[FLIGHT_DYNAMICS_INDEX_COUNT];
 
 #ifdef USE_BLACKBOX
 int32_t axisPID_P[FLIGHT_DYNAMICS_INDEX_COUNT];
@@ -416,6 +418,7 @@ int16_t pidAngleToRcCommand(float angleDeciDegrees, int16_t maxInclination)
 {
     angleDeciDegrees = constrainf(angleDeciDegrees, (float) -maxInclination, (float) maxInclination);
     return scaleRangef((float) angleDeciDegrees, (float) -maxInclination, (float) maxInclination, -500.0f, 500.0f);
+
 }
 
 /*
@@ -590,6 +593,7 @@ int16_t angleFreefloatDeadband(int16_t deadband, flight_dynamics_index_t axis)
 
 static float computePidLevelTarget(flight_dynamics_index_t axis) {
     // This is ROLL/PITCH, run ANGLE/HORIZON controllers
+	//printf("%d,%d\n",axis, rcCommand[axis]);
     float angleTarget = pidRcCommandToAngle(rcCommand[axis], pidProfile()->max_angle_inclination[axis]);
 
     // Automatically pitch down if the throttle is manually controlled and reduced bellow cruise throttle
@@ -1125,7 +1129,12 @@ void FAST_CODE pidController(float dT)
         if (FLIGHT_MODE(ANGLE_MODE) || FLIGHT_MODE(HORIZON_MODE) || isFlightAxisAngleOverrideActive(axis)) {
             //If axis angle override, get the correct angle from Logic Conditions
             float angleTarget = getFlightAxisAngleOverride(axis, computePidLevelTarget(axis));
-
+#ifdef PLATFORM_IS_OMNICOPTER
+			if(isNavHoldPositionActive()){
+				angleTarget = OVERRIDE_OMNI[axis];
+			}
+#endif
+//			printf("%d:%.3f\n",axis,angleTarget);
             //Apply the Level PID controller
             pidLevel(angleTarget, &pidState[axis], axis, horizonRateMagnitude, dT);
             canUseFpvCameraMix = false;     // FPVANGLEMIX is incompatible with ANGLE/HORIZON
