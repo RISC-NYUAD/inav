@@ -32,7 +32,7 @@
 
 #define TARGET_BOARD_IDENTIFIER "SITL"
 #define USBD_PRODUCT_STRING  "SITL"
-#define TARGET_MOTOR_COUNT 4
+#define TARGET_MOTOR_COUNT 8
 
 #define REQUIRE_PRINTF_LONG_SUPPORT
 
@@ -197,8 +197,8 @@ char *strnstr(const char *s, const char *find, size_t slen);
 
 #define SIMULATOR_MAX_RC_CHANNELS   16
 #define SIMULATOR_MAX_PWM_CHANNELS  16
-#define MAX_PWM_OUTPUT_PORTS 8
-#define TARGET_MOTOR_COUNT 4
+#define MAX_PWM_OUTPUT_PORTS 12
+#define TARGET_MOTOR_COUNT 8
 
 typedef struct {
     double timestamp;                   // in seconds
@@ -216,7 +216,7 @@ typedef struct {
 } rc_packet;
 
 typedef struct {
-    float motor_speed[4];   // normal: [0.0, 1.0], 3D: [-1.0, 1.0]
+    float motor_speed[8];   // normal: [0.0, 1.0], 3D: [-1.0, 1.0]
 } servo_packet;
 
 typedef struct {

@@ -24,7 +24,7 @@
 
 #include <stdint.h>
 
-#define GZ_MAX_PWM_OUTS 4
+#define GZ_MAX_PWM_OUTS 8
 
 bool simGazeboInit(char* ip, uint8_t* mapping, uint8_t mapCount, bool imu);
 double inavpwm_to_0_1(uint16_t motor_pwm);

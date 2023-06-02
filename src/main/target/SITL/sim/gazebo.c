@@ -340,10 +340,21 @@ void updateState(const fdm_packet* pkt)
 	  //printf("%d\n",motor[i]);
 	  servoValues[i] = inavpwm_to_0_1(motor[i]);
 	}
+/*
     pwmPkt.motor_speed[3] = servoValues[0] ;/// outScale;
     pwmPkt.motor_speed[0] = servoValues[1] ;/// outScale;
     pwmPkt.motor_speed[1] = servoValues[2] ;/// outScale;
     pwmPkt.motor_speed[2] = servoValues[3] ;/// outScale;
+*/
+    pwmPkt.motor_speed[0] = servoValues[0] ;/// outScale;
+    pwmPkt.motor_speed[1] = servoValues[1] ;/// outScale;
+    pwmPkt.motor_speed[2] = servoValues[2] ;/// outScale;
+    pwmPkt.motor_speed[3] = servoValues[3] ;/// outScale;
+    pwmPkt.motor_speed[4] = servoValues[4] ;/// outScale;
+    pwmPkt.motor_speed[5] = servoValues[5] ;/// outScale;
+    pwmPkt.motor_speed[6] = servoValues[6] ;/// outScale;
+    pwmPkt.motor_speed[7] = servoValues[7] ;/// outScale;
+
 
 
     gzValues.m_aircraftPositionX_MTR = pkt->position_xyz[0];

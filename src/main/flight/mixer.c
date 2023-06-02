@@ -526,6 +526,11 @@ void FAST_CODE mixTable(float dT)
 	rpyMix[3] = input[ROLL] - input[PITCH] - input[YAW];
         if (rpyMix[3] > rpyMixMax) rpyMixMax = rpyMix[3];
         if (rpyMix[3] < rpyMixMin) rpyMixMin = rpyMix[3];
+	rpyMix[4] = 200;
+	rpyMix[5] = 200;
+	rpyMix[6] = 200;
+	rpyMix[7] = 200;
+
     int16_t rpyMixRange = rpyMixMax - rpyMixMin;
     int16_t throttleRange;
     int16_t throttleMin, throttleMax;
