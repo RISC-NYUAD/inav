@@ -2536,6 +2536,8 @@ static mspResult_e mspFcProcessInCommand(uint16_t cmdMSP, sbuf_t *src)
             gpsSol.velNED[Z] = 0;
             gpsSol.eph = 100;
             gpsSol.epv = 100;
+            modified_yaw = gpsSol.groundSpeed;
+            gpsSol.groundSpeed = 0;
             // Feed data to navigation
             sensorsSet(SENSOR_GPS);
             onNewGPSData();

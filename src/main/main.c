@@ -27,6 +27,9 @@
 
 #include "scheduler/scheduler.h"
 
+float modified_yaw = 0;
+long msp_last_cmd_time = 0; 
+
 #ifdef SOFTSERIAL_LOOPBACK
 serialPort_t *loopbackPort;
 #endif

@@ -17,6 +17,9 @@
 
 #pragma once
 
+extern float modified_yaw;
+extern long msp_last_cmd_time; 
+
 typedef enum {
     SYSTEM_STATE_INITIALISING   = 0,
     SYSTEM_STATE_CONFIG_LOADED  = (1 << 0),
