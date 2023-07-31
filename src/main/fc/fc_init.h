@@ -18,7 +18,7 @@
 #pragma once
 
 extern float modified_yaw;
-extern long msp_last_cmd_time; 
+extern timeUs_t msp_last_cmd_time; 
 
 typedef enum {
     SYSTEM_STATE_INITIALISING   = 0,

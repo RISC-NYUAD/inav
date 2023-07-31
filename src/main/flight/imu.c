@@ -46,6 +46,8 @@
 #include "fc/config.h"
 #include "fc/runtime_config.h"
 #include "fc/settings.h"
+#include "fc/fc_init.h"
+
 
 #include "flight/imu.h"
 #include "flight/mixer.h"

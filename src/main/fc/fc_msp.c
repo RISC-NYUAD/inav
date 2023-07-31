@@ -71,6 +71,7 @@
 #include "fc/rc_modes.h"
 #include "fc/runtime_config.h"
 #include "fc/settings.h"
+#include "fc/fc_init.h"
 
 #include "flight/failsafe.h"
 #include "flight/imu.h"
@@ -1976,6 +1977,7 @@ static mspResult_e mspFcProcessInCommand(uint16_t cmdMSP, sbuf_t *src)
 
     case MSP_SET_MOTOR:
         if (dataSize == 8 * sizeof(uint16_t)) {
+            msp_last_cmd_time = micros();
             for (int i = 0; i < 8; i++) {
                 const int16_t disarmed = sbufReadU16(src);
                 if (i < MAX_SUPPORTED_MOTORS) {

@@ -24,11 +24,12 @@
 #include "drivers/serial_softserial.h"
 
 #include "fc/fc_init.h"
+#include "drivers/time.h"
 
 #include "scheduler/scheduler.h"
 
 float modified_yaw = 0;
-long msp_last_cmd_time = 0; 
+timeUs_t msp_last_cmd_time = 0; 
 
 #ifdef SOFTSERIAL_LOOPBACK
 serialPort_t *loopbackPort;
