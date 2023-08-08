@@ -537,7 +537,7 @@ void FAST_CODE mixTable(float dT)
 
 //    mixerThrottleCommand = rcCommand[THROTTLE];
 	if(isNavHoldPositionActive()){
-		J_z += dT * 0.1 * (pz - 200.0);
+		J_z += dT * 0.1 * (pz - posControl.desiredState.pos.z);
 		if(J_z > 2000.0) J_z = 2000.0;
 		if(J_z < -2000.0) J_z = -2000.0;
 		float alt_ctrl = 1200.0 -0.3*(pz - posControl.desiredState.pos.z) - 0.08*(vz - 0.0) - 0.05*J_z ;
@@ -559,33 +559,56 @@ void FAST_CODE mixTable(float dT)
 		//printf("%d,%d\n",OVERRIDE_OMNI[FD_ROLL],OVERRIDE_OMNI[FD_PITCH]);
 		//printf("%.2f,%.2f\n",posControl.desiredState.pos.x,posControl.desiredState.pos.y);
 	}
+	float fx = 0.0;
+	float fy = 0.0;
+	float fz = (float) (mixerThrottleCommand/70.0) ;
+	float tx = (float) (input[ROLL]/1000.0) ;
+	float ty = (float) (input[PITCH]/1000.0) ;
+	float tz = (float) (input[YAW]/500.0) ;
+	printf("%.2f,%.3f,%.3f,%.3f\n", fz,tx,ty,tz);
+
+	float forces[8];
+	forces[0] = 0.05672595*fx + 0.30532735*fy + 0.22103447*fz + 1.34366265*tx - 0.20123229*ty + 0.10340595*tz;
+	forces[1] = -0.29740887*fx + 0.24432859*fy + 0.17201345*fz - 1.23561926*tx - 0.20164879*ty - 0.3404224*tz;
+	forces[2] = -0.22981984*fx - 0.29660767*fy + 0.00229046*fz + 0.07218196*tx + 0.05310532*ty - 0.44562788*tz;
+	forces[3] = 0.01294391*fx + 0.23981251*fy - 0.34150929*fz + 0.29266017*tx + 1.00092644*ty + 0.3116706*tz;
+	forces[4] = 0.50699376*fx + 0.00542995*fy + 0.02709579*fz + 1.1140566*tx + 0.49020019*ty - 0.55076316*tz;
+	forces[5] = -0.02700161*fx - 0.06731981*fy - 0.35838813*fz - 0.38171035*tx - 1.13501878*ty + 0.15742413*tz;
+	forces[6] = 0.16147557*fx - 0.18154778*fy + 0.17071623*fz - 1.58165043*tx - 0.40588238*ty + 0.40624333*tz;
+	forces[7] = -0.18915626*fx - 0.25156428*fy + 0.10476156*fz + 0.35410129*tx + 0.39684149*ty + 0.34967509*tz;
+	float min_f = 0.0;
+	for(int i = 0 ; i < 8 ; i++){
+	  if(forces[i] < min_f){
+		min_f = forces[i];
+	  }
+	}
+	float addition = fabsf(min_f) * 1.04;
+	float max_f = 0.0;
+	for(int i = 0 ; i < 8 ; i++){
+		forces[i] += addition;
+		if(forces[i] > max_f){
+			max_f = forces[i];
+		}
+	}
+	if(max_f > 13.2){
+		for(int i = 0 ; i < 8 ; i++){
+			forces[i] *= (13.2/max_f);
+		}
+	}
+	float normalized_forces[8];
+	for(int i = 0 ; i < 8 ; i++){
+		normalized_forces[i] = fast_fsqrtf(forces[i])*0.24055 ;  //should now be in 0-1, the constant is 1/sqrt(thr_const) * RPS_2_RPM / MAX_RPM
+	}
+
 
     throttleRangeMin = throttleIdleValue;
     throttleRangeMax = motorConfig()->maxthrottle;
-    mixerThrottleCommand = ((mixerThrottleCommand - throttleRangeMin) * currentBatteryProfile->motor.throttleScale) + throttleRangeMin;
-    throttleMin = throttleRangeMin;
-    throttleMax = throttleRangeMax;
-    throttleRange = throttleMax - throttleMin;
     #define THROTTLE_CLIPPING_FACTOR    0.33f
-    motorMixRange = (float)rpyMixRange / (float)throttleRange;
-    if (motorMixRange > 1.0f) {
-        for (int i = 0; i < motorCount; i++) {
-            rpyMix[i] /= motorMixRange;
-        }
-
-        // Allow some clipping on edges to soften correction response
-        throttleMin = throttleMin + (throttleRange / 2) - (throttleRange * THROTTLE_CLIPPING_FACTOR / 2);
-        throttleMax = throttleMin + (throttleRange / 2) + (throttleRange * THROTTLE_CLIPPING_FACTOR / 2);
-    } else {
-        throttleMin = MIN(throttleMin + (rpyMixRange / 2), throttleMin + (throttleRange / 2) - (throttleRange * THROTTLE_CLIPPING_FACTOR / 2));
-        throttleMax = MAX(throttleMax - (rpyMixRange / 2), throttleMin + (throttleRange / 2) + (throttleRange * THROTTLE_CLIPPING_FACTOR / 2));
-    }
-    // Now add in the desired throttle, but keep in a range that doesn't clip adjusted
-    // roll/pitch/yaw. This could move throttle down, but also up for those low throttle flips.
     if (ARMING_FLAG(ARMED)) {
         const motorStatus_e currentMotorStatus = getMotorStatus();
         for (int i = 0; i < motorCount; i++) {
-            motor[i] = rpyMix[i] + constrain(mixerThrottleCommand * 1.0, throttleMin, throttleMax); //the 1.0 here is also a config
+            motor[i] = (int16_t) (normalized_forces[i] * (throttleRangeMax-throttleRangeMin) + throttleRangeMin) ;
+			printf("%.2f, %d, %d, %d\n",normalized_forces[i], motor[i], throttleRangeMin, throttleRangeMax);
 			
             if (failsafeIsActive()) {
                 motor[i] = constrain(motor[i], motorConfig()->mincommand, motorConfig()->maxthrottle);
@@ -602,7 +625,7 @@ void FAST_CODE mixTable(float dT)
         for (int i = 0; i < motorCount; i++) {
             motor[i] = motor_disarmed[i];
         }
-    }
+    }//printf("\n");
 
 #else
     int16_t input[3];   // RPY, range [-500:+500]

@@ -305,7 +305,7 @@ set(CMAKE_TARGET_DEFINITIONS_C
   "SITL"
   "SITL_BUILD"
   "__FORKNAME__=inav"
-  "__REVISION__=\"e4248937\""
+  "__REVISION__=\"db2b489a\""
   "__TARGET__=\"SITL\""
   )
 

@@ -309,13 +309,22 @@ static void exchangeData(void)
 
 //=============================BELOW==============================//
 double inavpwm_to_0_1(uint16_t motor_pwm){
-	double m0 = (double) (motor_pwm)/2000.0;
+	//OLD//
+/*	double m0 = (double) (motor_pwm)/2000.0;
 	if(m0<=0.0){
 	  m0 = 0.0;
 	}if(m0>=0.94){
 	  m0 = 0.94;
 	}
 	return m0;
+*/
+	double m0 = (double) (motor_pwm)/1850.0;
+	if(m0<=0.0){
+	  m0 = 0.0;
+	}if(m0>=0.99){
+	  m0 = 0.99;
+	}
+	return m0;	
 }
 
 void updateState(const fdm_packet* pkt)
