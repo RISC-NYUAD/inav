@@ -72,6 +72,15 @@ typedef struct mixerConfig_s {
     uint8_t outputMode;
 } mixerConfig_t;
 
+typedef struct mixerController_s {
+    float phi;
+	float theta;
+	float psi;
+	float phi_d;
+	float theta_d;
+	float psi_d;
+} mixerController_t;
+
 PG_DECLARE(mixerConfig_t, mixerConfig);
 
 typedef struct reversibleMotorsConfig_s {

@@ -4186,9 +4186,16 @@ src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o
  ../src/main/config/parameter_group.h
  ../src/main/config/parameter_group_ids.h
  ../src/main/drivers/adc.h
+ ../src/main/drivers/bus.h
+ ../src/main/drivers/bus_i2c.h
+ ../src/main/drivers/bus_spi.h
+ ../src/main/drivers/dma.h
  ../src/main/drivers/io_types.h
  ../src/main/drivers/pwm_mapping.h
  ../src/main/drivers/pwm_output.h
+ ../src/main/drivers/rcc_types.h
+ ../src/main/drivers/resource.h
+ ../src/main/drivers/sensor.h
  ../src/main/drivers/time.h
  ../src/main/fc/config.h
  ../src/main/fc/controlrate_profile.h
@@ -4199,10 +4206,12 @@ src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o
  ../src/main/fc/runtime_config.h
  ../src/main/fc/settings.h
  ../src/main/fc/stats.h
+ ../src/main/flight/dynamic_gyro_notch.h
  ../src/main/flight/failsafe.h
  ../src/main/flight/imu.h
  ../src/main/flight/mixer.h
  ../src/main/flight/pid.h
+ ../src/main/flight/secondary_dynamic_gyro_notch.h
  ../src/main/flight/servos.h
  ../src/main/io/gps.h
  ../src/main/navigation/navigation.h
@@ -4213,6 +4222,7 @@ src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o
  ../src/main/rx/rx.h
  ../src/main/sensors/battery.h
  ../src/main/sensors/battery_config_structs.h
+ ../src/main/sensors/gyro.h
  ../src/main/sensors/sensors.h
  ../src/main/target/SITL/target.h
  ../src/main/target/common.h

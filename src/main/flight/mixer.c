@@ -51,6 +51,8 @@
 #include "flight/pid.h"
 #include "flight/servos.h"
 
+#include "sensors/gyro.h"
+
 #include "navigation/navigation.h"
 #include "navigation/navigation_private.h"
 #include "navigation/navigation_pos_estimator_private.h"
@@ -78,6 +80,8 @@ static EXTENDED_FASTRAM int throttleRangeMax = 0;
 static EXTENDED_FASTRAM int8_t motorYawMultiplier = 1;
 
 static float J_z = 0.0f;
+static EXTENDED_FASTRAM mixerController_t controller_struct;
+static bool angle_resetted = true;
 
 /*
 // TODO: add correct mixing table for OMNICOPTER
@@ -92,6 +96,20 @@ static const motorMixer_t mixerOmnicopter[] = {
   {0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f},            // Motor 8
 };
 */
+typedef struct{
+  float angle_P ;
+  float Kp ;
+  float Kd ;
+  float Ki ;
+  float J ;
+  float prev_verr ;
+  float verr_dot ;
+
+//  angle_struct_s() : angle_P(11.0), Kp(20.0), Kd(10.0), Ki(0.1), J(0.0), prev_verr(0.0), verr_dot(0.0) { }
+
+}AngleStruct_t;
+
+static EXTENDED_FASTRAM AngleStruct_t angleState[FLIGHT_DYNAMICS_INDEX_COUNT];
 
 
 
@@ -211,6 +229,20 @@ void nullMotorRateLimiting(const float dT)
 
 void mixerInit(void)
 {
+	//J(0.0), prev_verr(0.0), verr_dot(0.0)
+	angleState[0].angle_P = 11.0;
+	angleState[1].angle_P = 11.0;
+	angleState[0].Kp = 20.0;
+	angleState[1].Kp = 20.0;
+	angleState[0].Kd = 10.0;
+	angleState[1].Kd = 10.0;
+	angleState[0].Ki = 0.1;
+	angleState[1].Ki = 0.1;
+	angleState[2].angle_P = 2.5;
+	angleState[2].Kp = 5.0;
+	angleState[2].Kd = 3.0;
+	angleState[2].Ki = 1.2;	
+
     computeMotorCount();
     loadPrimaryMotorMixer();
     // in 3D mode, mixer gain has to be halved
@@ -495,14 +527,10 @@ void FAST_CODE mixTable(float dT)
 #ifdef PLATFORM_IS_OMNICOPTER
 
 //	printf("Py:%.2f, Vy:%.2f\n",py,vy);
-    int16_t input[3];   // RPY, range [-500:+500]
-    input[ROLL] = axisPID[ROLL];
-    input[PITCH] = axisPID[PITCH];
-    input[YAW] = axisPID[YAW];
-
-	int16_t real_rll = attitude.values.roll;
-	int16_t real_pit = attitude.values.pitch;
-	int16_t real_yaw = attitude.values.yaw; //in decidegrees i.e. *0.1 turns it into degrees
+//    int16_t input[3];   // RPY, range [-500:+500]
+//    input[ROLL] = axisPID[ROLL];
+//    input[PITCH] = axisPID[PITCH];
+//    input[YAW] = axisPID[YAW];
 	float py = navGetCurrentActualPositionAndVelocity()->pos.y; //cm
 	float vy = navGetCurrentActualPositionAndVelocity()->vel.y; //cmps
 	float px = navGetCurrentActualPositionAndVelocity()->pos.x;
@@ -513,38 +541,36 @@ void FAST_CODE mixTable(float dT)
     int16_t rpyMix[MAX_SUPPORTED_MOTORS];
     int16_t rpyMixMax = 0; // assumption: symetrical about zero.
     int16_t rpyMixMin = 0;
-	//HARDCODED BY CHOICE TO PROVE A POINT//
-	rpyMix[0] = -input[ROLL] + input[PITCH] - input[YAW];
-        if (rpyMix[0] > rpyMixMax) rpyMixMax = rpyMix[0];
-        if (rpyMix[0] < rpyMixMin) rpyMixMin = rpyMix[0];	
-	rpyMix[1] = -input[ROLL] - input[PITCH] + input[YAW];
-        if (rpyMix[1] > rpyMixMax) rpyMixMax = rpyMix[1];
-        if (rpyMix[1] < rpyMixMin) rpyMixMin = rpyMix[1];
-	rpyMix[2] = input[ROLL] + input[PITCH] + input[YAW];
-        if (rpyMix[2] > rpyMixMax) rpyMixMax = rpyMix[2];
-        if (rpyMix[2] < rpyMixMin) rpyMixMin = rpyMix[2];
-	rpyMix[3] = input[ROLL] - input[PITCH] - input[YAW];
-        if (rpyMix[3] > rpyMixMax) rpyMixMax = rpyMix[3];
-        if (rpyMix[3] < rpyMixMin) rpyMixMin = rpyMix[3];
-	rpyMix[4] = 200;
-	rpyMix[5] = 200;
-	rpyMix[6] = 200;
-	rpyMix[7] = 200;
-
     int16_t rpyMixRange = rpyMixMax - rpyMixMin;
     int16_t throttleRange;
     int16_t throttleMin, throttleMax;
 
-//    mixerThrottleCommand = rcCommand[THROTTLE];
+
+	int16_t real_rll = attitude.values.roll;
+	int16_t real_pit = attitude.values.pitch;
+	int16_t real_yaw = attitude.values.yaw; //in decidegrees i.e. *0.1 turns it into degrees
+	controller_struct.phi = (float) real_rll*0.1*0.01745333 ;
+	controller_struct.theta = (float) real_pit*0.1*0.01745333 ;
+	float yaw_0_2pi = (float) real_yaw*0.1*0.01745333 ;
+	controller_struct.psi = atan2_approx(sin_approx(yaw_0_2pi), cos_approx(yaw_0_2pi)); //make it -pi, pi
+	controller_struct.phi_d = gyro.gyroADCf[0]*0.01745333;
+	controller_struct.theta_d = gyro.gyroADCf[1]*0.01745333;
+	controller_struct.psi_d = -gyro.gyroADCf[2]*0.01745333; //NOTE: (-) here since it appears to be NED
+//	printf("Yaw: %.3f, Yaw_dot: %.3f\n",controller_struct.psi,controller_struct.psi_d);
+
 	if(isNavHoldPositionActive()){
-		J_z += dT * 0.1 * (pz - posControl.desiredState.pos.z);
+		J_z += dT * (pz - 300.0); //posControl.desiredState.pos.z
 		if(J_z > 2000.0) J_z = 2000.0;
 		if(J_z < -2000.0) J_z = -2000.0;
-		float alt_ctrl = 1200.0 -0.3*(pz - posControl.desiredState.pos.z) - 0.08*(vz - 0.0) - 0.05*J_z ;
+		float alt_ctrl = 1300.0 -0.3*(pz - 300.0) - 0.08*(vz - 0.0) - 0.05*J_z ;
 		mixerThrottleCommand = (int) alt_ctrl;
+//		printf("%.2f, %.2f, %.2f\n", px, py, pz);
 	}else{
 		mixerThrottleCommand = rcCommand[THROTTLE];
+		//printf("%d\n",mixerThrottleCommand);
 	}
+	float roll_cmd = 0.0;
+	float pitch_cmd = 0.0;
 	if(isNavHoldPositionActive()){
 		float x_ctrl = -0.2*(px - posControl.desiredState.pos.x) - 0.09*vx ;
 		float y_ctrl = -0.2*(py - posControl.desiredState.pos.y) - 0.09*vy ;
@@ -559,13 +585,54 @@ void FAST_CODE mixTable(float dT)
 		//printf("%d,%d\n",OVERRIDE_OMNI[FD_ROLL],OVERRIDE_OMNI[FD_PITCH]);
 		//printf("%.2f,%.2f\n",posControl.desiredState.pos.x,posControl.desiredState.pos.y);
 	}
+	float phiTarget = 0.001 * OVERRIDE_OMNI[FD_ROLL];
+	float thetaTarget = 0.001 * OVERRIDE_OMNI[FD_PITCH];
+	//float psiTarget = getFlightAxisAngleOverride(2, computePidLevelTarget(2));
+	printf("%.2f, %.2f\n", phiTarget, thetaTarget);
+
+	float error = controller_struct.phi - phiTarget ; 
+	float v_des = -angleState[0].angle_P * error ;
+	float v_err = controller_struct.phi_d - v_des ;
+	angleState[0].J += dT * v_err ;
+	float v_err_dot = (v_err - angleState[0].prev_verr)/dT ;
+	angleState[0].verr_dot = 0.2*v_err_dot + 0.8*angleState[0].verr_dot ;
+	angleState[0].prev_verr = v_err;
+	float tx = -angleState[0].Kp * v_err - angleState[0].Kd * angleState[0].verr_dot - angleState[0].Ki * angleState[0].J ;
+	tx *= 0.04365;
+
+	error = controller_struct.theta - thetaTarget ; 
+	v_des = -angleState[1].angle_P * error ;
+	v_err = controller_struct.theta_d - v_des ;
+	angleState[1].J += dT * v_err ;
+	v_err_dot = (v_err - angleState[1].prev_verr)/dT ;
+	angleState[1].verr_dot = 0.2*v_err_dot + 0.8*angleState[1].verr_dot ;
+	angleState[1].prev_verr = v_err;
+	float ty = -angleState[1].Kp * v_err - angleState[1].Kd * angleState[1].verr_dot - angleState[1].Ki * angleState[1].J ;
+	ty *= 0.062;
+
+	error = controller_struct.psi - 0.0 ;
+	float yaw_rate_des = -angleState[2].angle_P * atan2_approx(sin_approx(error),cos_approx(error)) ;
+	error = controller_struct.psi_d - yaw_rate_des;
+	angleState[2].J += dT * error ;
+	v_err = (error - angleState[2].prev_verr)/dT ;
+	angleState[2].prev_verr = error ;
+	float tz = -angleState[2].Kp * error - angleState[2].Kd * v_err - angleState[2].Ki * angleState[2].J ;
+	tz *= 0.105;
+	if(fabsf(angleState[2].verr_dot - tz) > 10.0){
+		tz *= 0.01;
+	}
+	angleState[2].verr_dot = 0.05*tz + 0.95*angleState[2].verr_dot ; 
+	tz = angleState[2].verr_dot;
+
+
+//    mixerThrottleCommand = rcCommand[THROTTLE];
 	float fx = 0.0;
 	float fy = 0.0;
 	float fz = (float) (mixerThrottleCommand/70.0) ;
-	float tx = (float) (input[ROLL]/1000.0) ;
-	float ty = (float) (input[PITCH]/1000.0) ;
-	float tz = (float) (input[YAW]/500.0) ;
-	printf("%.2f,%.3f,%.3f,%.3f\n", fz,tx,ty,tz);
+//	float tx = (float) (input[ROLL]/1000.0) ;
+//	float ty = (float) (input[PITCH]/1000.0) ;
+//	float tz = (float) (input[YAW]/500.0) ;
+	//printf("%.2f,%.3f,%.3f,%.3f\n", fz,tx,ty,tz);
 
 	float forces[8];
 	forces[0] = 0.05672595*fx + 0.30532735*fy + 0.22103447*fz + 1.34366265*tx - 0.20123229*ty + 0.10340595*tz;
@@ -605,10 +672,13 @@ void FAST_CODE mixTable(float dT)
     throttleRangeMax = motorConfig()->maxthrottle;
     #define THROTTLE_CLIPPING_FACTOR    0.33f
     if (ARMING_FLAG(ARMED)) {
+		if(angle_resetted){
+			angle_resetted = false; //when we arm, if the angle_reset is true, make it false. This will allow to reset again when we disarm
+		}
         const motorStatus_e currentMotorStatus = getMotorStatus();
         for (int i = 0; i < motorCount; i++) {
             motor[i] = (int16_t) (normalized_forces[i] * (throttleRangeMax-throttleRangeMin) + throttleRangeMin) ;
-			printf("%.2f, %d, %d, %d\n",normalized_forces[i], motor[i], throttleRangeMin, throttleRangeMax);
+			//printf("%.2f, %d, %d, %d\n",normalized_forces[i], motor[i], throttleRangeMin, throttleRangeMax);
 			
             if (failsafeIsActive()) {
                 motor[i] = constrain(motor[i], motorConfig()->mincommand, motorConfig()->maxthrottle);
@@ -622,6 +692,14 @@ void FAST_CODE mixTable(float dT)
             }
         }
     } else {
+		if(!angle_resetted){//when we disarm, if the angle_reset is false, reset and make it true.
+			for(int i = 0 ; i < 3 ; i++){
+				angleState[i].verr_dot = 0.0;
+				angleState[i].prev_verr = 0.0;
+				angleState[i].J = 0.0;
+			}
+			angle_resetted = true;
+		}
         for (int i = 0; i < motorCount; i++) {
             motor[i] = motor_disarmed[i];
         }

@@ -4185,9 +4185,16 @@ src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main
 src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main/config/parameter_group.h
 src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main/config/parameter_group_ids.h
 src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main/drivers/adc.h
+src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main/drivers/bus.h
+src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main/drivers/bus_i2c.h
+src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main/drivers/bus_spi.h
+src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main/drivers/dma.h
 src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main/drivers/io_types.h
 src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main/drivers/pwm_mapping.h
 src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main/drivers/pwm_output.h
+src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main/drivers/rcc_types.h
+src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main/drivers/resource.h
+src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main/drivers/sensor.h
 src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main/drivers/time.h
 src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main/fc/config.h
 src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main/fc/controlrate_profile.h
@@ -4198,10 +4205,12 @@ src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main
 src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main/fc/runtime_config.h
 src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main/fc/settings.h
 src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main/fc/stats.h
+src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main/flight/dynamic_gyro_notch.h
 src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main/flight/failsafe.h
 src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main/flight/imu.h
 src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main/flight/mixer.h
 src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main/flight/pid.h
+src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main/flight/secondary_dynamic_gyro_notch.h
 src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main/flight/servos.h
 src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main/io/gps.h
 src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main/navigation/navigation.h
@@ -4212,6 +4221,7 @@ src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main
 src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main/rx/rx.h
 src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main/sensors/battery.h
 src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main/sensors/battery_config_structs.h
+src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main/sensors/gyro.h
 src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main/sensors/sensors.h
 src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main/target/SITL/target.h
 src/main/target/SITL/CMakeFiles/SITL.elf.dir/__/__/flight/mixer.c.o: ../src/main/target/common.h

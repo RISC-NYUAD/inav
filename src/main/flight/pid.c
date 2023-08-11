@@ -1130,9 +1130,10 @@ void FAST_CODE pidController(float dT)
             //If axis angle override, get the correct angle from Logic Conditions
             float angleTarget = getFlightAxisAngleOverride(axis, computePidLevelTarget(axis));
 #ifdef PLATFORM_IS_OMNICOPTER
-			if(isNavHoldPositionActive()){
-				angleTarget = OVERRIDE_OMNI[axis];
-			}
+//			if(isNavHoldPositionActive()){
+//				angleTarget = OVERRIDE_OMNI[axis];
+			OVERRIDE_OMNI[axis] = angleTarget;
+//			}
 #endif
 //			printf("%d:%.3f\n",axis,angleTarget);
             //Apply the Level PID controller
