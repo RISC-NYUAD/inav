@@ -412,7 +412,7 @@ cfTask_t cfTasks[TASK_COUNT] = {
     [TASK_PID] = {
         .taskName = "PID",
         .taskFunc = taskMainPidLoop,
-        .desiredPeriod = TASK_PERIOD_US(1000),
+        .desiredPeriod = TASK_PERIOD_US(100),//1000
         .staticPriority = TASK_PRIORITY_REALTIME,
     },
     [TASK_GYRO] = {
@@ -424,8 +424,8 @@ cfTask_t cfTasks[TASK_COUNT] = {
     [TASK_SERIAL] = {
         .taskName = "SERIAL",
         .taskFunc = taskHandleSerial,
-        .desiredPeriod = TASK_PERIOD_HZ(100),     // 100 Hz should be enough to flush up to 115 bytes @ 115200 baud
-        .staticPriority = TASK_PRIORITY_LOW,
+        .desiredPeriod = TASK_PERIOD_HZ(500),     // 100 Hz should be enough to flush up to 115 bytes @ 115200 baud
+        .staticPriority = TASK_PRIORITY_HIGH,
     },
 
 #if defined(BEEPER) || defined(USE_DSHOT)

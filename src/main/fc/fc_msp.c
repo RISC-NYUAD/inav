@@ -469,17 +469,24 @@ static bool mspFcProcessOutCommand(uint16_t cmdMSP, sbuf_t *dst, mspPostProcessF
     case MSP_RAW_IMU:
         {
             for (int i = 0; i < 3; i++) {
-                sbufWriteU16(dst, (int16_t)lrintf(acc.accADCf[i] * 512));
+                sbufWriteU16(dst, (int16_t)lrintf(acc.accADCf[i]  * 512));
+                //sbufWriteU16(dst, (int16_t)lrintf(-3.0+i));
             }
             for (int i = 0; i < 3; i++) {
                 sbufWriteU16(dst, gyroRateDps(i));
+                //sbufWriteU16(dst, (int16_t)lrintf(i+3.0));
+
             }
+
+            sbufWriteU16(dst, attitude.values.roll);
+            sbufWriteU16(dst, attitude.values.pitch);
+            sbufWriteU16(dst, DECIDEGREES_TO_DEGREES(attitude.values.yaw));
             for (int i = 0; i < 3; i++) {
-#ifdef USE_MAG
-                sbufWriteU16(dst, mag.magADC[i]);
-#else
-                sbufWriteU16(dst, 0);
-#endif
+//#ifdef USE_MAG
+//                sbufWriteU16(dst, mag.magADC[i]);
+//#else
+//                sbufWriteU16(dst, 0);
+//#endif
             }
         }
         break;
@@ -3711,6 +3718,11 @@ mspResult_e mspFcProcessCommand(mspPacket_t *cmd, mspPacket_t *reply, mspPostPro
     } else {
         if (!mspFCProcessInOutCommand(cmdMSP, dst, src, &ret)) {
             ret = mspFcProcessInCommand(cmdMSP, src);
+            if (cmdMSP == MSP_SET_MOTOR) 
+            {
+                ret = mspFcProcessOutCommand(MSP_RAW_IMU, dst, mspPostProcessFn);
+                reply->cmd = MSP_RAW_IMU;
+            }
         }
     }
 

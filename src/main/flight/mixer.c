@@ -568,6 +568,16 @@ void FAST_CODE mixTable()
         }
         }
     } else {
+
+        const timeUs_t currentTimeUs = micros();
+        const timeDeltaLarge_t deltaMicrosDisarmedMotorUpdate = currentTimeUs - msp_last_cmd_time;
+        if (deltaMicrosDisarmedMotorUpdate >250000)
+        {   
+            for (int i = 0; i < motorCount; i++) {
+            motor_disarmed[i] = motorZeroCommand;
+        }
+        }
+
         for (int i = 0; i < motorCount; i++) {
             motor[i] = motor_disarmed[i];
         }
